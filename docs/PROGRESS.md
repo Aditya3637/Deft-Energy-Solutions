@@ -5,16 +5,36 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage A — Design foundation (not started)
-- **Next action:** design tokens + core component set + layout shells (public/auth/app/mobile), with
-  scroll behaviour, loading/empty/error states baked in
-- **App scaffold:** Next.js 15 (App Router) + TypeScript landing page exists (`/app`)
+- **Active stage:** Stage A — Design foundation (✅ DONE; pending an `npm install && npm run build` on a
+  Node machine — this laptop has no Node, so the foundation is hand-written and not yet built here)
+- **Next action:** Stage B1 — core-loop screens: landing→upload→OCR review (42 fields)→diagnosis→savings
+  result, built to the per-screen Definition of Done, reading through a mock-API seam
+- **Routes live:** `/` (PublicShell), `/styleguide` (components + 4 states), `/app` (AppShell dashboard),
+  `/field` (FieldShell), `/login` (AuthShell)
 
 ## Open questions / assumptions
 
-- _(none yet)_
+- **Tailwind v3, not v4.** SPEC_V1 mentioned "Tailwind CSS 4"; chose v3 + classic config for robustness
+  when hand-authoring without a local build. Revisit if v4 is required.
+- **No web fonts yet.** System font stack via `--font-sans` to avoid build-time font fetching; swap in a
+  brand font (e.g. Inter via next/font) later.
+- Marketing CTAs `/analyze`, `/pricing`, `/privacy`, `/terms` are Stage B routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Stage A)
+- **Stage A complete.** Hand-wrote the full design foundation (no Node on this laptop; builds elsewhere):
+  - Tailwind v3 + PostCSS config; `components.json`; design tokens (light/dark, energy-green brand, chart
+    palette) in `globals.css` with focus-visible, reduced-motion, thin scrollbar + safe-area utilities.
+  - `lib/utils.ts` (cn) and `lib/format.ts` (Indian ₹ lakh/crore, units, DD-MM-YYYY).
+  - UI primitives: button, card, input, label, badge, skeleton, separator, table (sticky-header +
+    scrollable), tabs, spinner. State components: empty-state, error-state.
+  - Four layout shells with scroll/linking baked in: PublicShell (sticky header), AuthShell (centered),
+    AppShell (pinned sidebar+topbar, single scroll region, mobile drawer w/ Esc + scroll-lock + active-nav),
+    FieldShell (mobile bottom-nav, safe-area).
+  - Framework state files: `loading.tsx` (skeletons), `error.tsx` (recoverable), `not-found.tsx`.
+  - Demo routes wiring every shell + a `/styleguide` gallery showing the four states.
+- Next: Stage B1 core-loop screens.
 
 ### 2026-06-08 (later)
 - Saved Phase 2 as locked **SPEC_V2.md** (28 microservices, 18 integrations, 25 templates, 15 calc engines,

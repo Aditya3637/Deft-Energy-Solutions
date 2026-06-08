@@ -1,0 +1,40 @@
+import {
+  LayoutDashboard,
+  FileText,
+  Building2,
+  ListChecks,
+  Bell,
+  LineChart,
+  Leaf,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
+
+export type NavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+/**
+ * Primary app navigation. Ordered by the core loop (bills first), then the
+ * widening modules. Hrefs are placeholders until Stage B builds the screens.
+ */
+export const PRIMARY_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/app", icon: LayoutDashboard },
+  { label: "Bills", href: "/app/bills", icon: FileText },
+  { label: "Buildings", href: "/app/buildings", icon: Building2 },
+  { label: "Tasks", href: "/app/tasks", icon: ListChecks },
+  { label: "Alerts", href: "/app/alerts", icon: Bell },
+  { label: "Analytics", href: "/app/analytics", icon: LineChart },
+  { label: "Carbon", href: "/app/carbon", icon: Leaf },
+  { label: "Settings", href: "/app/settings", icon: Settings },
+];
+
+/** Field/mobile bottom nav — a focused subset for on-site roles. */
+export const FIELD_NAV: NavItem[] = [
+  { label: "Home", href: "/field", icon: LayoutDashboard },
+  { label: "Work", href: "/field/work-orders", icon: ListChecks },
+  { label: "Audit", href: "/field/audit", icon: FileText },
+  { label: "Alerts", href: "/field/alerts", icon: Bell },
+];

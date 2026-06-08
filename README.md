@@ -38,11 +38,36 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Run the production build          |
 | `npm run lint`  | Lint the codebase                 |
 
+## Stack
+
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 3 · shadcn/ui conventions · lucide-react.
+
 ## Structure
 
 ```
 app/
-  layout.tsx     Root layout + metadata
-  page.tsx       Landing page
-  globals.css    Global styles
+  layout.tsx        Root layout + metadata
+  globals.css       Design tokens (light/dark) + base/utilities
+  loading.tsx       Root loading skeleton
+  error.tsx         Root error boundary
+  not-found.tsx     404
+  page.tsx          Landing (PublicShell)
+  login/            Sign-in (AuthShell)
+  styleguide/       Component + state gallery
+  app/              Authenticated area (AppShell)
+  field/            Mobile field area (FieldShell)
+components/
+  ui/               Primitives: button, card, input, label, badge,
+                    skeleton, separator, table, tabs, spinner
+  states/           empty-state, error-state
+  layout/           app-shell, public-shell, auth-shell, field-shell,
+                    brand, nav-config
+lib/
+  utils.ts          cn() class merger
+  format.ts         Indian ₹/unit/date formatting
 ```
+
+## Routes to see the foundation
+
+`/` landing · `/styleguide` components + the four states · `/app` dashboard shell ·
+`/field` mobile shell · `/login` auth shell.

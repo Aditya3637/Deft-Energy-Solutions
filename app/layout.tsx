@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Deft Energy Solutions",
-  description: "Smart, sustainable energy solutions.",
+  title: {
+    default: "Deft Energy Solutions",
+    template: "%s · Deft Energy",
+  },
+  description:
+    "Upload a bill, get an instant diagnosis and quantified savings. Smart, sustainable energy for the way you work.",
 };
 
 export default function RootLayout({
@@ -12,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }
