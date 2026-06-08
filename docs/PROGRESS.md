@@ -5,7 +5,7 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 (field roles) ✅ DONE
+- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · **Bill engine → full 58-check taxonomy ✅ DONE**
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
@@ -28,6 +28,19 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Bill engine: full loss taxonomy)
+- Engine previously ran only 3 checks (CD, PF, ToD). Rebuilt it to the **complete 58-check taxonomy**
+  across 10 categories (`lib/loss-taxonomy.ts`) with a real engine (`lib/diagnosis.ts`):
+  - Every bill now runs **all 58 checks**. 15 are assessable from a single bill (compute a ₹ figure or
+    "clear"); the other 43 are marked **"needs more data"** with the exact data that unlocks them
+    (15-min interval, sub-metering, building profile, fuel bills, tariff order, 12-month history,
+    power-quality survey, open-access inputs, portfolio, records).
+  - Result screen is **numbers-first**: total ₹/yr, coverage line (X found / Y need data / Z clear),
+    top action, category ₹ breakdown, plain opportunity list, and an "Unlock more" panel grouping the
+    missing checks by data needed. All technicalities are behind a **"Show all 58 checks"** toggle.
+- Note: the taxonomy summary totals **58** (the instruction said 52); built all 58.
+- Next: resume Stage B5 (decision-makers).
 
 ### 2026-06-08 (Stage B4)
 - **Stage B4 complete — field roles (mobile-first, offline-tolerant).** All inside the FieldShell

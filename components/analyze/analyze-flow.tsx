@@ -11,19 +11,22 @@ import {
   TrendingDown,
   Sparkles,
   RotateCcw,
+  ChevronDown,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_FIELDS,
   GROUP_ORDER,
-  diagnose,
   type ExtractedField,
 } from "@/lib/mock/bill";
+import { fullDiagnose } from "@/lib/diagnosis";
+import { TOTAL_CHECKS, CATEGORIES, DATA_NEED_LABELS } from "@/lib/loss-taxonomy";
 import {
   formatRupees,
   formatRupeesCompact,
-  formatUnit,
 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -273,12 +276,6 @@ function ReviewStep({
 
 /* ---------------------------------------------------------------- Result */
 
-const severityVariant = {
-  high: "destructive",
-  medium: "warning",
-  low: "secondary",
-} as const;
-
 function ResultStep({
   fields,
   onBack,
@@ -288,12 +285,16 @@ function ResultStep({
   onBack: () => void;
   onReset: () => void;
 }) {
-  const diag = React.useMemo(() => diagnose(fields), [fields]);
+  const diag = React.useMemo(() => fullDiagnose(fields), [fields]);
+  const [showAll, setShowAll] = React.useState(false);
   const get = (key: string) => fields.find((f) => f.key === key)?.value ?? "";
+
+  const lossResults = diag.results.filter((r) => r.status === "loss");
+  const categoriesWithSavings = diag.byCategory.filter((c) => c.annualINR > 0);
 
   return (
     <div className="space-y-6">
-      {/* Headline */}
+      {/* Headline — numbers first */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-sm font-medium text-primary">
@@ -301,28 +302,35 @@ function ResultStep({
             Estimated savings
           </div>
           <div className="mt-1 text-4xl font-semibold tracking-tight">
-            up to {formatRupeesCompact(diag.annualSaving)}
+            up to {formatRupeesCompact(diag.totalAnnualINR)}
             <span className="text-lg font-normal text-muted-foreground"> /year</span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {get("consumerName")} · {get("discom")} · {get("tariffCategory")} ·
+            {get("consumerName")} · {get("discom")} ·{" "}
             bill of {formatRupees(Number(get("totalAmountDue")) || 0)}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            We ran all {TOTAL_CHECKS} loss checks on this bill —{" "}
+            <span className="font-medium text-foreground">{diag.counts.losses} opportunities found</span>,{" "}
+            {diag.counts.needsData} need more data, {diag.counts.healthy} clear.
           </p>
         </CardContent>
       </Card>
 
       {/* Top action */}
-      {diag.top && (
+      {diag.top[0] && (
         <Card>
           <CardHeader>
             <CardDescription>Start here — your single biggest win</CardDescription>
-            <CardTitle className="text-lg">{diag.top.title}</CardTitle>
+            <CardTitle className="text-lg">{diag.top[0].check.name}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">{diag.top.detail}</p>
+            {diag.top[0].note ? (
+              <p className="text-sm text-muted-foreground">{diag.top[0].note}.</p>
+            ) : null}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="text-2xl font-semibold text-primary">
-                {formatRupeesCompact(diag.top.annualSaving)}/yr
+                {formatRupeesCompact(diag.top[0].annualINR ?? 0)}/yr
               </span>
               <Button asChild>
                 <Link href="/login">Save &amp; add to plan</Link>
@@ -332,32 +340,117 @@ function ResultStep({
         </Card>
       )}
 
-      {/* All findings */}
+      {/* Where the savings are — category ₹ breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Where the savings are</CardTitle>
+          <CardDescription>By category, per year.</CardDescription>
+        </CardHeader>
+        <CardContent className="divide-y">
+          {categoriesWithSavings.map((c) => (
+            <div key={c.n} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+              <span className="text-sm">{c.name}</span>
+              <span className="font-semibold text-primary">{formatRupeesCompact(c.annualINR)}/yr</span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Opportunities — plain ₹ list, no jargon */}
       <div className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          All opportunities ({diag.findings.length})
+          Opportunities ({lossResults.length})
         </h2>
-        {diag.findings.map((f) => (
-          <Card key={f.id}>
+        {lossResults.map((r) => (
+          <Card key={r.check.id}>
             <CardContent className="flex items-start justify-between gap-4 pt-6">
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">{f.title}</h3>
-                  <Badge variant={severityVariant[f.severity]} className="capitalize">
-                    {f.severity}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{f.detail}</p>
+                <h3 className="font-medium">{r.check.name}</h3>
+                {r.note ? <p className="mt-1 text-sm text-muted-foreground">{r.note}</p> : null}
               </div>
               <div className="shrink-0 text-right">
                 <div className="font-semibold text-primary">
-                  {formatRupeesCompact(f.annualSaving)}
+                  {formatRupeesCompact(r.annualINR ?? 0)}
                 </div>
                 <div className="text-xs text-muted-foreground">per year</div>
               </div>
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Unlock more — what data is missing */}
+      {diag.gaps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              Unlock more savings
+            </CardTitle>
+            <CardDescription>
+              {diag.counts.needsData} checks need more than a single bill. Add data to estimate them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="divide-y">
+            {diag.gaps.map((g) => (
+              <div key={g.need} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <span className="text-sm">Add {g.label}</span>
+                <Badge variant="secondary">+{g.checks.length} checks</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* All 58 checks — technicalities, hidden by default */}
+      <div>
+        <Button
+          variant="ghost"
+          className="w-full justify-between"
+          aria-expanded={showAll}
+          onClick={() => setShowAll((v) => !v)}
+        >
+          <span>{showAll ? "Hide" : "Show"} all {TOTAL_CHECKS} checks</span>
+          <ChevronDown className={cn("h-4 w-4 transition-transform", showAll && "rotate-180")} />
+        </Button>
+        {showAll && (
+          <div className="mt-3 space-y-4">
+            {CATEGORIES.map((cat) => {
+              const rows = diag.results.filter((r) => r.check.category === cat.n);
+              return (
+                <Card key={cat.n}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{cat.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="divide-y py-0">
+                    {rows.map((r) => (
+                      <div key={r.check.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                        <span className={cn(r.status === "needs_data" && "text-muted-foreground")}>
+                          {r.check.name}
+                        </span>
+                        <span className="shrink-0 text-right text-xs">
+                          {r.status === "loss" ? (
+                            <span className="font-semibold text-primary">
+                              {formatRupeesCompact(r.annualINR ?? 0)}/yr
+                            </span>
+                          ) : r.status === "healthy" ? (
+                            <span className="inline-flex items-center gap-1 text-success">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Clear
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Needs {r.check.needs[0] ? DATA_NEED_LABELS[r.check.needs[0]] : "data"}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <Separator />
