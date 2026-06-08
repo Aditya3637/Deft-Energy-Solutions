@@ -6,6 +6,7 @@ import {
   Bell,
   LineChart,
   Calculator,
+  Wallet,
   Leaf,
   Settings,
   type LucideIcon,
@@ -38,5 +39,5 @@ export const FIELD_NAV: NavItem[] = [
   { label: "Home", href: "/field", icon: LayoutDashboard },
   { label: "Work", href: "/field/work-orders", icon: ListChecks },
   { label: "Audit", href: "/field/audit", icon: FileText },
-  { label: "Alerts", href: "/field/alerts", icon: Bell },
+  { label: "Collect", href: "/field/collection", icon: Wallet },
 ];

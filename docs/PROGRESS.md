@@ -5,15 +5,17 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage A ✅ · B1 (core loop) ✅ · B2 (account & portfolio) ✅ · B3 (act on insight) ✅ DONE
+- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 (field roles) ✅ DONE
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B4 — field roles (mobile-first, offline-tolerant): on-site audit (A04),
-  maintenance/work orders (O02/O03/O09), collection (L03/L04/L08). Then formalise the Stage D mock-API seam.
-- **Routes live:** `/` · `/analyze` (B1) · `/app` dashboard · `/app/bills` · `/app/buildings` +
-  `/app/buildings/[id]` · `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` ·
-  `/app/{carbon,settings}` (stubs) · `/styleguide` · `/field` · `/login`
+- **Next action:** Stage B5 — decision-makers: BRSR (R01), ESG dashboard (R02), compliance scorecard (R13),
+  executive summary (D07), CAPEX approval (F10). Then formalise the Stage D mock-API seam.
+- **Routes live (app):** `/app` · `/app/bills` · `/app/buildings` + `[id]` · `/app/tasks` · `/app/alerts` ·
+  `/app/analytics` · `/app/roi` · `/app/{carbon,settings}` (stubs)
+- **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·
+  `/field/collection`
+- **Other:** `/` · `/analyze` (B1) · `/styleguide` · `/login`
 
 ## Open questions / assumptions
 
@@ -26,6 +28,21 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Stage B4)
+- **Stage B4 complete — field roles (mobile-first, offline-tolerant).** All inside the FieldShell
+  (bottom-nav, safe-area), reading from `lib/mock/field.ts`:
+  - **Work orders** (`/field/work-orders` + `[id]`) — O03 list + detail with an O09 **inspection checklist**
+    (checkable, progress bar), photo/GPS capture (mock), and a "Complete" gate that needs all checks done.
+    Detail statically exported via `generateStaticParams`.
+  - **On-site audit** (`/field/audit`, A04) — sectioned measurement capture (Lighting/HVAC/Motors/Compressed
+    air), live progress, photo + GPS capture, "save on device".
+  - **Collection** (`/field/collection`, L03/L04/L08) — optimised route of stops with cash/UPI **record
+    payment**; collected/pending KPIs update live.
+  - **Field home** (`/field`) — greeting, quick tiles, "up next" work orders.
+  - Shared **SyncStatus** banner conveys offline tolerance (go offline → changes "saved on device" → Sync).
+  - Updated FIELD_NAV (Home / Work / Audit / Collect).
+- Next: Stage B5 (decision-makers).
 
 ### 2026-06-08 (Stage B3)
 - **Stage B3 complete — act on insight.** Three interactive (client) areas, each behind a server page:
