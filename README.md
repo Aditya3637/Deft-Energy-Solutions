@@ -4,6 +4,15 @@ Web app for Deft Energy Solutions — built with [Next.js](https://nextjs.org) (
 
 > **Note:** All code and assets for this project live in this GitHub repository only. Do not keep working copies on local machines as the source of truth — clone, work, push, and clean up.
 
+## Planning docs
+
+- [`docs/SPEC_V1.md`](docs/SPEC_V1.md) — locked V1 product spec (scope reference)
+- [`docs/PLAN.md`](docs/PLAN.md) — living build plan (minimum-friction, thin vertical slices)
+- [`docs/PROGRESS.md`](docs/PROGRESS.md) — living progress log, updated each session
+
+**Design North Star:** intuitive, simple, minimum friction. Core loop = *upload a bill → instant diagnosis →
+quantified savings → one recommended action.* Designed for ~50,000 bills/month and ~5,000 monthly users.
+
 ## Getting started
 
 Requires Node.js 18.18+.
