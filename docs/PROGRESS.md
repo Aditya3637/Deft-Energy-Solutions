@@ -5,14 +5,15 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage A ✅ DONE · Stage B1 (core-loop screens) ✅ DONE
+- **Active stage:** Stage A ✅ · Stage B1 (core loop) ✅ · Stage B2 (account & portfolio) ✅ DONE
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B2 — account & portfolio screens (building profile, bill history/trends,
-  multi-site consolidated, forecast/budget). Then formalise the Stage D mock-API seam.
-- **Routes live:** `/` landing · `/analyze` (B1 core loop) · `/styleguide` · `/app` (dashboard) ·
-  `/field` (mobile) · `/login`
+- **Next action:** Stage B3 — act on insight (tasks auto-created from diagnoses, alert/notification engine,
+  ROI calculator). Then formalise the Stage D mock-API seam across B1/B2 data modules.
+- **Routes live:** `/` · `/analyze` (B1) · `/app` dashboard · `/app/bills` · `/app/buildings` +
+  `/app/buildings/[id]` · `/app/analytics` · `/app/{tasks,alerts,carbon,settings}` (stubs) ·
+  `/styleguide` · `/field` · `/login`
 
 ## Open questions / assumptions
 
@@ -20,9 +21,28 @@
   when hand-authoring without a local build. Revisit if v4 is required.
 - **No web fonts yet.** System font stack via `--font-sans` to avoid build-time font fetching; swap in a
   brand font (e.g. Inter via next/font) later.
-- Marketing CTAs `/analyze`, `/pricing`, `/privacy`, `/terms` are Stage B routes — currently a graceful 404.
+- **Charts are dependency-free** (hand-rolled `BarChart`) for now; swap to ECharts/Recharts (per SPEC_V2)
+  later without changing callers.
+- Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Stage B2)
+- **Stage B2 complete — account & portfolio.** All in the AppShell, reading from a new portfolio mock
+  module (`lib/mock/portfolio.ts`, 6 buildings, deterministic to avoid hydration mismatch):
+  - **Dashboard** (`/app`) — portfolio KPIs, 12-month spend bar chart, top-opportunity buildings.
+  - **Bills** (`/app/bills`) — KPIs, month-on-month bar chart, recent-bills table (sticky header,
+    scrollable, status badges, pagination footer stub).
+  - **Buildings** (`/app/buildings`) — consolidated multi-site view (B21): totals strip + building cards
+    with data-quality flags ("N bills missing").
+  - **Building profile** (`/app/buildings/[id]`) — auto-populated profile, KPIs, spend trend, recent
+    bills. Static-exported via `generateStaticParams`.
+  - **Analytics** (`/app/analytics`) — tabs for Forecast (B20: 12 actual + 3 projected), Budget vs actual
+    (F09: over/under tones + variance), and Portfolio (D01: EPI + savings by building).
+  - Added shared `PageHeader`, `StatCard`, and a dependency-free `BarChart`.
+  - Added graceful stubs for not-yet-built nav items (tasks/alerts/carbon/settings) so the sidebar has no
+    dead ends.
+- Next: Stage B3.
 
 ### 2026-06-08 (Stage B1 + hosting)
 - **Stage B1 complete — the core loop.** Built the anonymous, value-before-signup flow at `/analyze`:
