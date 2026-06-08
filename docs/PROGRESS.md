@@ -5,15 +5,15 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage A ✅ · Stage B1 (core loop) ✅ · Stage B2 (account & portfolio) ✅ DONE
+- **Active stage:** Stage A ✅ · B1 (core loop) ✅ · B2 (account & portfolio) ✅ · B3 (act on insight) ✅ DONE
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B3 — act on insight (tasks auto-created from diagnoses, alert/notification engine,
-  ROI calculator). Then formalise the Stage D mock-API seam across B1/B2 data modules.
+- **Next action:** Stage B4 — field roles (mobile-first, offline-tolerant): on-site audit (A04),
+  maintenance/work orders (O02/O03/O09), collection (L03/L04/L08). Then formalise the Stage D mock-API seam.
 - **Routes live:** `/` · `/analyze` (B1) · `/app` dashboard · `/app/bills` · `/app/buildings` +
-  `/app/buildings/[id]` · `/app/analytics` · `/app/{tasks,alerts,carbon,settings}` (stubs) ·
-  `/styleguide` · `/field` · `/login`
+  `/app/buildings/[id]` · `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` ·
+  `/app/{carbon,settings}` (stubs) · `/styleguide` · `/field` · `/login`
 
 ## Open questions / assumptions
 
@@ -26,6 +26,19 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Stage B3)
+- **Stage B3 complete — act on insight.** Three interactive (client) areas, each behind a server page:
+  - **Tasks** (`/app/tasks`) — Kanban + list views; tasks auto-created from diagnoses/alerts/audits with
+    source, priority, assignee, due, savings. Cards move between To do / In progress / Done; KPIs incl.
+    open savings. (`lib/mock/tasks.ts`)
+  - **Alerts** (`/app/alerts`) — N03 active-alert dashboard (acknowledge/resolve) + N01 rules tab with
+    active toggles (PF<0.90, MD>90% CD, bill anomaly, EPI deviation, missing bill, meter offline). KPIs.
+    (`lib/mock/alerts.ts`)
+  - **ROI calculator** (`/app/roi`, E12) — live payback / IRR / NPV / lifetime savings; prefill from
+    recommended ECM presets (CD reduction, APFC, ToD, solar, BESS). Pure math in `lib/finance.ts`.
+  - Added `Calculator` nav item for ROI; replaced the tasks/alerts stubs.
+- Next: Stage B4 (field roles).
 
 ### 2026-06-08 (Stage B2)
 - **Stage B2 complete — account & portfolio.** All in the AppShell, reading from a new portfolio mock
