@@ -5,12 +5,14 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage A — Design foundation (✅ DONE; pending an `npm install && npm run build` on a
-  Node machine — this laptop has no Node, so the foundation is hand-written and not yet built here)
-- **Next action:** Stage B1 — core-loop screens: landing→upload→OCR review (42 fields)→diagnosis→savings
-  result, built to the per-screen Definition of Done, reading through a mock-API seam
-- **Routes live:** `/` (PublicShell), `/styleguide` (components + 4 states), `/app` (AppShell dashboard),
-  `/field` (FieldShell), `/login` (AuthShell)
+- **Active stage:** Stage A ✅ DONE · Stage B1 (core-loop screens) ✅ DONE
+- **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
+  also verifies the code compiles, since this laptop has no Node). Live URL:
+  https://aditya3637.github.io/Deft-Energy-Solutions/
+- **Next action:** Stage B2 — account & portfolio screens (building profile, bill history/trends,
+  multi-site consolidated, forecast/budget). Then formalise the Stage D mock-API seam.
+- **Routes live:** `/` landing · `/analyze` (B1 core loop) · `/styleguide` · `/app` (dashboard) ·
+  `/field` (mobile) · `/login`
 
 ## Open questions / assumptions
 
@@ -21,6 +23,18 @@
 - Marketing CTAs `/analyze`, `/pricing`, `/privacy`, `/terms` are Stage B routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-08 (Stage B1 + hosting)
+- **Stage B1 complete — the core loop.** Built the anonymous, value-before-signup flow at `/analyze`:
+  upload (drag/drop + photo + "try a sample") → extracting (skeleton + live status) → review all **42
+  fields** (grouped, editable, low-confidence flagged with "Check") → savings result (headline ₹/yr, top
+  action, ranked findings with severity). Edits to fields re-run the diagnosis live.
+- Added `lib/mock/bill.ts` — the 42-field sample bill + a real `diagnose()` engine (contract-demand
+  optimisation, power-factor/APFC, ToD arbitrage). This is the seed of the Stage D mock-API seam.
+- **Hosting wired up.** `next.config.mjs` → static export with Pages basePath; `.github/workflows/deploy.yml`
+  builds on GitHub runners and deploys to Pages. Pages enabled via API (build_type=workflow).
+- Fixed the earlier `/analyze` dead-end (landing CTA now lands on the real flow).
+- Next: Stage B2.
 
 ### 2026-06-08 (Stage A)
 - **Stage A complete.** Hand-wrote the full design foundation (no Node on this laptop; builds elsewhere):
