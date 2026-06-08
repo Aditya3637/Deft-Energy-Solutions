@@ -1,0 +1,34 @@
+:root {
+  --bg: #0a0f0d;
+  --fg: #e8f0ec;
+  --accent: #2fd47e;
+  --muted: #8aa39a;
+  --card: #111a16;
+  --border: #1e2c26;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
