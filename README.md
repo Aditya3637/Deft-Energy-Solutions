@@ -6,12 +6,17 @@ Web app for Deft Energy Solutions — built with [Next.js](https://nextjs.org) (
 
 ## Planning docs
 
-- [`docs/SPEC_V1.md`](docs/SPEC_V1.md) — locked V1 product spec (scope reference)
-- [`docs/PLAN.md`](docs/PLAN.md) — living build plan (minimum-friction, thin vertical slices)
+- [`docs/SPEC_V1.md`](docs/SPEC_V1.md) — locked V1 product spec (scope: pages, tables, personas, flows)
+- [`docs/SPEC_V2.md`](docs/SPEC_V2.md) — locked V2 technical spec (architecture, integrations, stack, testing)
+- [`docs/PLAN.md`](docs/PLAN.md) — living build plan (screens-first, minimum-friction)
 - [`docs/PROGRESS.md`](docs/PROGRESS.md) — living progress log, updated each session
 
 **Design North Star:** intuitive, simple, minimum friction. Core loop = *upload a bill → instant diagnosis →
 quantified savings → one recommended action.* Designed for ~50,000 bills/month and ~5,000 monthly users.
+
+**Build approach:** screens-first — the full UI is built and polished with mock data (scrolling, linking,
+loading/empty/error states, responsiveness) behind a stable mock-API seam, then backend, endpoints, and
+integrations are wired in without changing the UI.
 
 ## Getting started
 
