@@ -7,6 +7,9 @@ import {
   LineChart,
   Calculator,
   Wallet,
+  Presentation,
+  ShieldCheck,
+  BadgeCheck,
   Leaf,
   Settings,
   type LucideIcon,
@@ -24,12 +27,15 @@ export type NavItem = {
  */
 export const PRIMARY_NAV: NavItem[] = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
+  { label: "Executive", href: "/app/executive", icon: Presentation },
   { label: "Bills", href: "/app/bills", icon: FileText },
   { label: "Buildings", href: "/app/buildings", icon: Building2 },
   { label: "Tasks", href: "/app/tasks", icon: ListChecks },
   { label: "Alerts", href: "/app/alerts", icon: Bell },
   { label: "Analytics", href: "/app/analytics", icon: LineChart },
   { label: "ROI", href: "/app/roi", icon: Calculator },
+  { label: "Approvals", href: "/app/capex", icon: BadgeCheck },
+  { label: "Compliance", href: "/app/compliance", icon: ShieldCheck },
   { label: "Carbon", href: "/app/carbon", icon: Leaf },
   { label: "Settings", href: "/app/settings", icon: Settings },
 ];

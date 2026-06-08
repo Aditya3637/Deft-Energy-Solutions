@@ -5,14 +5,15 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · **Bill engine → full 58-check taxonomy ✅ DONE**
+- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · Bill engine (58 + audit) ✅ · B5 (decision-makers) ✅ DONE
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B5 — decision-makers: BRSR (R01), ESG dashboard (R02), compliance scorecard (R13),
-  executive summary (D07), CAPEX approval (F10). Then formalise the Stage D mock-API seam.
-- **Routes live (app):** `/app` · `/app/bills` · `/app/buildings` + `[id]` · `/app/tasks` · `/app/alerts` ·
-  `/app/analytics` · `/app/roi` · `/app/{carbon,settings}` (stubs)
+- **Next action:** Stage B6 — energy markets & assets (open access journey, IEX/carbon trading, BESS,
+  microgrid, VPP). Then formalise the Stage D mock-API seam. (OCR remains Stage G, clearly simulated.)
+- **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
+  `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
+  `/app/{carbon,settings}` (stubs)
 - **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·
   `/field/collection`
 - **Other:** `/` · `/analyze` (B1) · `/styleguide` · `/login`
@@ -33,6 +34,19 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage B5)
+- **Stage B5 complete — decision-makers.** From `lib/mock/sustainability.ts` and `lib/mock/capex.ts`:
+  - **Executive summary** (`/app/executive`, D07) — board-ready single screen: spend / savings / carbon /
+    ESG / Net Zero / compliance KPIs, spend trend, top risks, top opportunities, "Export deck" (PDF/PPT at
+    Stage G).
+  - **Compliance** (`/app/compliance`) — tabs: **Scorecard** (R13, obligations table + overall %), **BRSR**
+    (R01, section progress, environment auto-filled, generate-report), **ESG** (R02, pillar breakdown).
+  - **CAPEX approvals** (`/app/capex`, F10) — interactive workflow FM → EM → CFO → Board with approve/reject
+    advancing the stage; pending / pipeline / approved KPIs.
+  - Added nav: Executive, Approvals, Compliance.
+- OCR remains explicitly simulated (labelled in the demo; strategy in OCR-STRATEGY.md).
+- Next: Stage B6 (energy markets & assets).
 
 ### 2026-06-08 (Bill engine: correctness audit — the heart)
 - Reviewed the engine hard (every consumer relies on it). Fixed real bugs and made it honest:
