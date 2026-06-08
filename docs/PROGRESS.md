@@ -29,6 +29,22 @@
 
 ## Log
 
+### 2026-06-08 (Bill engine: correctness audit — the heart)
+- Reviewed the engine hard (every consumer relies on it). Fixed real bugs and made it honest:
+  - **No false positives from missing OCR fields.** Demand checks (1.1/1.2/1.3) now require BOTH contract
+    and recorded demand present — previously a missing `maxDemand`/`contractDemand` (reads 0) could
+    "recommend cutting demand to zero" or flag a phantom penalty. Guards added across all detectors.
+  - **Demand rate is read from the bill** (`fixedDemandCharges/billingDemand`) instead of a hardcoded ₹450.
+  - **Recoverable vs opportunity split.** Headline = "you're overpaying ~₹X/yr" (penalties/errors you can
+    stop now); open access / solar / BESS move to a separate "bigger moves (potential)" section — a
+    decision, not a current loss. Matches the funnel: propose losses → progressively ask about solar /
+    15-min data → convert via "talk to an advisor".
+  - **Dropped an over-promise:** the prompt-payment-rebate check fired for nearly every bill; moved to
+    "needs the tariff order" instead of asserting a loss we can't verify.
+  - **Open-access eligibility keyed off the energy rate**, not the bill total (arrears no longer distort it).
+  - Removed the old 3-check `diagnose()` (single engine now); documented every check's field+formula+
+    assumption in **docs/BILL-ENGINE.md**.
+
 ### 2026-06-08 (Bill engine: full loss taxonomy)
 - Engine previously ran only 3 checks (CD, PF, ToD). Rebuilt it to the **complete 58-check taxonomy**
   across 10 categories (`lib/loss-taxonomy.ts`) with a real engine (`lib/diagnosis.ts`):

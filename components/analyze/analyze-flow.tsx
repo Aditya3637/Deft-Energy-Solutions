@@ -289,39 +289,42 @@ function ResultStep({
   const [showAll, setShowAll] = React.useState(false);
   const get = (key: string) => fields.find((f) => f.key === key)?.value ?? "";
 
-  const lossResults = diag.results.filter((r) => r.status === "loss");
-  const categoriesWithSavings = diag.byCategory.filter((c) => c.annualINR > 0);
-
   return (
     <div className="space-y-6">
-      {/* Headline — numbers first */}
+      {/* Headline — what you're overpaying NOW (recoverable) */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-sm font-medium text-primary">
             <TrendingDown className="h-4 w-4" />
-            Estimated savings
+            You&apos;re overpaying about
           </div>
           <div className="mt-1 text-4xl font-semibold tracking-tight">
-            up to {formatRupeesCompact(diag.totalAnnualINR)}
+            {formatRupeesCompact(diag.recoverableINR)}
             <span className="text-lg font-normal text-muted-foreground"> /year</span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             {get("consumerName")} · {get("discom")} ·{" "}
             bill of {formatRupees(Number(get("totalAmountDue")) || 0)}
           </p>
+          {diag.opportunityINR > 0 && (
+            <p className="mt-2 text-sm font-medium text-foreground">
+              + up to {formatRupeesCompact(diag.opportunityINR)}/yr from bigger moves (open access, solar…)
+            </p>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">
             We ran all {TOTAL_CHECKS} loss checks on this bill —{" "}
-            <span className="font-medium text-foreground">{diag.counts.losses} opportunities found</span>,{" "}
-            {diag.counts.needsData} need more data, {diag.counts.healthy} clear.
+            <span className="font-medium text-foreground">{diag.recoverable.length} you can recover now</span>,{" "}
+            {diag.opportunities.length} bigger moves, {diag.counts.needsData} need more data,{" "}
+            {diag.counts.healthy} clear.
           </p>
         </CardContent>
       </Card>
 
-      {/* Top action */}
+      {/* Top fix */}
       {diag.top[0] && (
         <Card>
           <CardHeader>
-            <CardDescription>Start here — your single biggest win</CardDescription>
+            <CardDescription>Start here — your single biggest recoverable loss</CardDescription>
             <CardTitle className="text-lg">{diag.top[0].check.name}</CardTitle>
           </CardHeader>
           <CardContent>
@@ -340,44 +343,63 @@ function ResultStep({
         </Card>
       )}
 
-      {/* Where the savings are — category ₹ breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Where the savings are</CardTitle>
-          <CardDescription>By category, per year.</CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y">
-          {categoriesWithSavings.map((c) => (
-            <div key={c.n} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-              <span className="text-sm">{c.name}</span>
-              <span className="font-semibold text-primary">{formatRupeesCompact(c.annualINR)}/yr</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Opportunities — plain ₹ list, no jargon */}
+      {/* Recoverable — money leaking now, plain ₹ list */}
       <div className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Opportunities ({lossResults.length})
+          What you can recover ({diag.recoverable.length})
         </h2>
-        {lossResults.map((r) => (
-          <Card key={r.check.id}>
-            <CardContent className="flex items-start justify-between gap-4 pt-6">
-              <div>
-                <h3 className="font-medium">{r.check.name}</h3>
-                {r.note ? <p className="mt-1 text-sm text-muted-foreground">{r.note}</p> : null}
-              </div>
-              <div className="shrink-0 text-right">
-                <div className="font-semibold text-primary">
-                  {formatRupeesCompact(r.annualINR ?? 0)}
-                </div>
-                <div className="text-xs text-muted-foreground">per year</div>
-              </div>
+        {diag.recoverable.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center gap-3 pt-6 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-5 w-5 text-success" />
+              No billing leaks found from this bill — your charges look clean.
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          diag.recoverable.map((r) => (
+            <Card key={r.check.id}>
+              <CardContent className="flex items-start justify-between gap-4 pt-6">
+                <div>
+                  <h3 className="font-medium">{r.check.name}</h3>
+                  {r.note ? <p className="mt-1 text-sm text-muted-foreground">{r.note}</p> : null}
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="font-semibold text-primary">{formatRupeesCompact(r.annualINR ?? 0)}</div>
+                  <div className="text-xs text-muted-foreground">per year</div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
+
+      {/* Bigger moves — opportunities that need a decision (progressive asks) */}
+      {diag.opportunities.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Bigger moves
+          </h2>
+          {diag.opportunities.map((r) => (
+            <Card key={r.check.id}>
+              <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-medium">{r.check.name}</h3>
+                  {r.note ? <p className="mt-1 text-sm text-muted-foreground">{r.note}</p> : null}
+                </div>
+                <div className="flex items-center justify-between gap-4 sm:justify-end">
+                  <div className="text-right">
+                    <div className="font-semibold text-primary">~{formatRupeesCompact(r.annualINR ?? 0)}/yr</div>
+                    <div className="text-xs text-muted-foreground">potential</div>
+                  </div>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/login">Explore</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Unlock more — what data is missing */}
       {diag.gaps.length > 0 && (
@@ -398,6 +420,23 @@ function ResultStep({
                 <Badge variant="secondary">+{g.checks.length} checks</Badge>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Conversion — let us recover it for you (the paid / managed funnel) */}
+      {diag.recoverableINR > 0 && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-semibold">Want us to recover this for you?</h3>
+              <p className="text-sm text-muted-foreground">
+                Our team files the corrections, tracks the savings, and only succeeds when you do.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/login">Talk to an advisor</Link>
+            </Button>
           </CardContent>
         </Card>
       )}

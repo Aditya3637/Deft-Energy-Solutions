@@ -87,7 +87,7 @@ export const LOSS_CHECKS: LossCheck[] = [
   { id: "5.3", category: 5, name: "Slab / tier miscalculation", needs: ["tariffOrder"], fix: "Recompute against the tariff schedule" },
   { id: "5.4", category: 5, name: "Fuel surcharge (FAC/FPPCA) error", needs: ["tariffOrder"], fix: "Cross-check FAC with the SERC order" },
   { id: "5.5", category: 5, name: "Electricity-duty rate error", needs: ["tariffOrder"], fix: "Verify duty rate against notification" },
-  { id: "5.6", category: 5, name: "Missing applicable rebates", needs: [], fix: "Pay before due date; claim rebates" },
+  { id: "5.6", category: 5, name: "Missing applicable rebates", needs: ["tariffOrder"], fix: "Pay before due date; claim rebates" },
   // 6. Metering & billing errors
   { id: "6.1", category: 6, name: "Faulty / fast-running meter", needs: ["history12mo"], fix: "Meter testing; CGRF complaint" },
   { id: "6.2", category: 6, name: "Estimated / average billing", needs: ["records"], fix: "Insist on actual readings" },
