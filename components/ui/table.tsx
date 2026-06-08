@@ -3,48 +3,41 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Table primitives. For large data sets (DoD: scrolling + scale to tens of
- * thousands of rows) wrap <Table> in a scroll container and pass
- * `stickyHeader` so the header stays pinned while the body scrolls, e.g.:
+ * Table primitives (server-component safe — no context/hooks). For large data
+ * sets (DoD: scrolling + scale) wrap <Table> in a scroll container and pass
+ * `sticky` to <TableHeader> so the header stays pinned while the body scrolls:
  *
  *   <div className="max-h-[60vh] overflow-auto scrollbar-thin">
- *     <Table stickyHeader> ... </Table>
+ *     <Table><TableHeader sticky>…</TableHeader>…</Table>
  *   </div>
  */
 
-const TableContext = React.createContext<{ stickyHeader?: boolean }>({});
-
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement> & { stickyHeader?: boolean }
->(({ className, stickyHeader, ...props }, ref) => (
-  <TableContext.Provider value={{ stickyHeader }}>
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom border-collapse text-sm", className)}
-      {...props}
-    />
-  </TableContext.Provider>
+  React.HTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref) => (
+  <table
+    ref={ref}
+    className={cn("w-full caption-bottom border-collapse text-sm", className)}
+    {...props}
+  />
 ));
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => {
-  const { stickyHeader } = React.useContext(TableContext);
-  return (
-    <thead
-      ref={ref}
-      className={cn(
-        "[&_tr]:border-b",
-        stickyHeader && "sticky top-0 z-10 bg-card",
-        className,
-      )}
-      {...props}
-    />
-  );
-});
+  React.HTMLAttributes<HTMLTableSectionElement> & { sticky?: boolean }
+>(({ className, sticky, ...props }, ref) => (
+  <thead
+    ref={ref}
+    className={cn(
+      "[&_tr]:border-b",
+      sticky && "sticky top-0 z-10 bg-card",
+      className,
+    )}
+    {...props}
+  />
+));
 TableHeader.displayName = "TableHeader";
 
 const TableBody = React.forwardRef<

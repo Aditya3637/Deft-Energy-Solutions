@@ -80,8 +80,8 @@ export default function BillsPage() {
         </CardHeader>
         <CardContent className="px-0">
           <div className="max-h-[28rem] overflow-auto scrollbar-thin">
-            <Table stickyHeader>
-              <TableHeader>
+            <Table>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead className="pl-6">Building</TableHead>
                   <TableHead>DISCOM</TableHead>

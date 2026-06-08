@@ -100,8 +100,8 @@ export default function StyleGuidePage() {
 
       <Section title="Table (sticky header, scrollable)">
         <div className="max-h-64 overflow-auto rounded-lg border scrollbar-thin">
-          <Table stickyHeader>
-            <TableHeader>
+          <Table>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>DISCOM</TableHead>
                 <TableHead>Month</TableHead>
