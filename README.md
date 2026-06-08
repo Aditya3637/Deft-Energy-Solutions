@@ -10,6 +10,8 @@ Web app for Deft Energy Solutions — built with [Next.js](https://nextjs.org) (
 - [`docs/SPEC_V2.md`](docs/SPEC_V2.md) — locked V2 technical spec (architecture, integrations, stack, testing)
 - [`docs/PLAN.md`](docs/PLAN.md) — living build plan (screens-first, minimum-friction)
 - [`docs/PROGRESS.md`](docs/PROGRESS.md) — living progress log, updated each session
+- [`docs/BILL-ENGINE.md`](docs/BILL-ENGINE.md) — the 58-check diagnosis engine (field + formula per check)
+- [`docs/OCR-STRATEGY.md`](docs/OCR-STRATEGY.md) — bill ingestion & OCR strategy (OCR is Stage G; today simulated)
 
 **Design North Star:** intuitive, simple, minimum friction. Core loop = *upload a bill → instant diagnosis →
 quantified savings → one recommended action.* Designed for ~50,000 bills/month and ~5,000 monthly users.

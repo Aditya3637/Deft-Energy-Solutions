@@ -19,6 +19,11 @@
 
 ## Open questions / assumptions
 
+- **OCR is NOT built — `/analyze` is simulated on a sample bill.** Real ingestion is Stage G. The strategy
+  (multi-channel intake so most consumers skip OCR: digital-PDF text parse, BBPS, DISCOM portal, AMI; then
+  VLM + per-DISCOM templates; validation + human-in-the-loop + feedback) is documented in
+  [OCR-STRATEGY.md](./OCR-STRATEGY.md). The review/correct-42-fields screen and the engine's missing-field
+  guards are the deliberate design for imperfect OCR. SPEC_V2 §7 accuracy numbers are targets, not current.
 - **Tailwind v3, not v4.** SPEC_V1 mentioned "Tailwind CSS 4"; chose v3 + classic config for robustness
   when hand-authoring without a local build. Revisit if v4 is required.
 - **No web fonts yet.** System font stack via `--font-sans` to avoid build-time font fetching; swap in a

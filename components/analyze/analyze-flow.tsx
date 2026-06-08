@@ -131,7 +131,8 @@ function UploadStep({ onStart }: { onStart: () => void }) {
         </div>
         <h2 className="text-lg font-semibold">Drop your electricity bill here</h2>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          PDF or photo. We read all 42 fields automatically — no signup needed.
+          PDF or photo. We extract the 42 fields, flag anything uncertain for you to
+          confirm, and never need a signup to show you the result.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Button onClick={() => inputRef.current?.click()}>
@@ -158,6 +159,11 @@ function UploadStep({ onStart }: { onStart: () => void }) {
           Try it with a sample bill
         </Button>
       </div>
+      <p className="text-center text-xs text-muted-foreground">
+        Preview note: this walkthrough runs on a sample bill. Live extraction
+        (digital-PDF parse, DISCOM fetch and VLM OCR with confidence scoring) lands at Stage G —
+        see <code>docs/OCR-STRATEGY.md</code>.
+      </p>
     </div>
   );
 }
