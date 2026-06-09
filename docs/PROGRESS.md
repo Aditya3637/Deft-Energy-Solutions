@@ -7,6 +7,19 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Stage H — DPDP self-service: access / correct / erase / consent)
+- **Data-principal rights now self-serve** (DPDP Act 2023). New `server/src/account/` (auth-required, acts
+  only on the caller's own org): `GET /v1/account` (profile + consent), `GET /v1/account/export` (full
+  JSON export — Right to access/portability), `PATCH /v1/account` (correct name), `DELETE /v1/account`
+  (Right to erasure). **Erasure deletes the account + org + ALL org-scoped data in one transaction**
+  (child→parent ordered deletes; atomic, rolls back cleanly — no orphans/FK breakage).
+- **Consent** recorded at signup (`Account.consentAt`/`consentVersion`, set on magic-link verify off the
+  privacy notice). **Grievance contact** (DPO, 15-day response) surfaced.
+- **Frontend:** `lib/api/account.ts` + Settings → **"Privacy & data (DPDP)"** panel: edit name, download
+  data (JSON), delete-everything (two-click confirm → signs out), consent date, grievance contact. Shows a
+  sign-in prompt when anonymous. Fulfils the promise already on `/privacy`.
+- **Deferred (TODO #5):** retention auto-purge cron, perf @ scale, full test matrix, VAPT, monitoring.
+
 ### 2026-06-09 (Core loop — carry savings to dashboard + building views)
 - **The recoverable ₹ now follows the user everywhere** (big-ticket #4 done). `SavedBill` gained
   `buildingId`; `/app` (dashboard) shows a "Your analyzed bills" card with per-bill recoverable + a

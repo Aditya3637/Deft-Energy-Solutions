@@ -15,12 +15,14 @@ import { CorrectionsModule } from "./corrections/corrections.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { CollectionsModule } from "./collections/collections.module";
 import { AuthModule } from "./auth/auth.module";
+import { AccountModule } from "./account/account.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
+    AccountModule,
     BuildingsModule,
     BillsModule,
     DiagnosisModule,

@@ -40,8 +40,10 @@
 4. ~~**Carry savings everywhere:** dashboard + building detail show the user's saved bills + recoverable ₹.~~
    ✅ done — both surface `bills.listAnalyzed()` (live on Vercel SSR, fixture on static); building view
    filters by `buildingId`.
-5. **Stage H harden:** DPDP (consent, retention, export/delete self-service), perf @ 50k bills/mo + 5k MAU,
-   full test matrix (unit/integration/E2E/contract/perf/security/a11y), VAPT, error monitoring + logging.
+5. **Stage H harden:** **DPDP self-service ✅** — access/export, correction, erasure (atomic cascade
+   delete), consent recorded at signup, grievance contact (`/v1/account/*` + Settings → Privacy & data).
+   *Still:* retention auto-purge cron, perf @ 50k bills/mo + 5k MAU, full test matrix
+   (unit/integration/E2E/contract/perf/security/a11y), VAPT, error monitoring + structured logging.
 6. **Remaining integrations (Stage G):** IEX/PXIL prices, smart-meter/AMI, BMS/IoT, WhatsApp/SMS,
    DISCOM tariff scraping.
 7. **Module breadth → live:** capex / compliance / carbon / markets / assets / marketplace / training are

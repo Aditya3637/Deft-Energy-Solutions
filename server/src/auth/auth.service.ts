@@ -57,7 +57,10 @@ export class AuthService {
       await tx.organisation.create({ data: { id: orgId, name: domain, plan: "FREE" } });
       await tx.user.create({ data: { id: userId, orgId, email, name: email.split("@")[0], role: "OWNER" } });
     });
-    await this.prisma.account.create({ data: { email, orgId, userId } });
+    // Verifying the magic link from the privacy notice is the explicit consent act.
+    await this.prisma.account.create({
+      data: { email, orgId, userId, consentAt: new Date(), consentVersion: "2023-DPDP-v1" },
+    });
     return { orgId, userId };
   }
 }

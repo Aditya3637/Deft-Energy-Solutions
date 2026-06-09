@@ -579,5 +579,8 @@ model Account {
   email     String   @unique
   orgId     String
   userId    String
+  // DPDP consent: recorded at signup (explicit action on the privacy notice).
+  consentAt      DateTime?
+  consentVersion String   @default("")
   createdAt DateTime @default(now())
 }
