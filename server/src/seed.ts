@@ -8,6 +8,8 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import { commissionPaise, rupeesToPaise, type CommissionModel } from "./collections/money";
+import { fullDiagnose } from "./diagnosis/engine";
+import { billToFields } from "./diagnosis/bill-fields";
 
 const prisma = new PrismaClient();
 const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000001";
@@ -152,6 +154,20 @@ async function main() {
           totalAmountDue: 4484210,
           billDate: "02-06-2026",
           billingPeriodDays: 31,
+        },
+      });
+    }
+
+    // Ensure the sample bill is DIAGNOSED so "Your analyzed bills" shows a real
+    // example with recoverable ₹ (user-saved bills get a diagnosis via the API).
+    const diagBill = await tx.electricityBill.findFirst({ where: { consumerNumber: "0123456789" } });
+    if (diagBill && !(await tx.diagnosis.findUnique({ where: { billId: diagBill.id } }))) {
+      const d = fullDiagnose(billToFields(diagBill));
+      await tx.diagnosis.create({
+        data: {
+          billId: diagBill.id,
+          recoverableInr: Math.round(d.recoverableINR),
+          opportunityInr: Math.round(d.opportunityINR),
         },
       });
     }

@@ -1,8 +1,40 @@
 import * as M from "@/lib/mock/bill";
-import { apiFetch, isApiConfigured } from "@/lib/api/client";
+import { apiFetch, isApiConfigured, liveServer, NO_STORE } from "@/lib/api/client";
 
 export type { ExtractedField, FieldGroup } from "@/lib/mock/bill";
 export const GROUP_ORDER = M.GROUP_ORDER;
+
+/** A bill the user saved to their workspace, with its diagnosed savings. */
+export type SavedBill = {
+  id: string;
+  title: string;
+  discom: string;
+  month: string;
+  amountInr: number;
+  recoverableInr: number | null;
+  analyzed: boolean;
+};
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "DD-MM-YYYY" → "Mon YYYY" for display. */
+function billMonth(billDate: string | null): string {
+  const m = billDate?.match(/^\d{2}-(\d{2})-(\d{4})/);
+  return m ? `${MONTHS[Number(m[1]) - 1] ?? "?"} ${m[2]}` : "—";
+}
+
+type ServerBill = {
+  id: string;
+  consumerName: string | null;
+  discom: string | null;
+  totalAmountDue: number | null;
+  billDate: string | null;
+  diagnosis: { recoverableInr: number; opportunityInr: number } | null;
+};
+
+/** Demo analyzed bills for the static Pages build (Vercel SSR shows the real ones). */
+const SAVED_FIXTURE: SavedBill[] = [
+  { id: "fx-1", title: "Acme Manufacturing Pvt Ltd", discom: "MSEDCL", month: "Jun 2026", amountInr: 4484210, recoverableInr: 2606000, analyzed: true },
+];
 
 /** Bill fields that are text (everything else is sent as a number). */
 const STRING_KEYS = new Set([
@@ -43,5 +75,32 @@ export const bills = {
       body: JSON.stringify(fieldsToBillPayload(fields)),
     });
     return { saved: true, bill };
+  },
+
+  /**
+   * The user's saved + analyzed bills (with diagnosed recoverable ₹). Live on
+   * Vercel SSR; the static Pages build shows the demo fixture. This is what
+   * closes the core loop — the savings you found on /analyze show up here.
+   */
+  async listAnalyzed(): Promise<SavedBill[]> {
+    if (liveServer()) {
+      try {
+        const rows = await apiFetch<ServerBill[]>("/v1/bills", NO_STORE);
+        return rows
+          .map((b) => ({
+            id: b.id,
+            title: b.consumerName ?? "Bill",
+            discom: b.discom ?? "—",
+            month: billMonth(b.billDate),
+            amountInr: Math.round(b.totalAmountDue ?? 0),
+            recoverableInr: b.diagnosis ? Math.round(b.diagnosis.recoverableInr) : null,
+            analyzed: !!b.diagnosis,
+          }))
+          .filter((b) => b.analyzed); // only diagnosed bills (not payment-tracking rows)
+      } catch {
+        /* fall back */
+      }
+    }
+    return SAVED_FIXTURE.map((b) => ({ ...b }));
   },
 };

@@ -7,6 +7,20 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (REFOCUS — back to the core savings loop; close the loop on /app/bills)
+- **Course-correction.** The last ~4 turns (payments → collection-agent → BBPS licence → connector) drifted
+  into **Module L (collection)** — peripheral + premature (needs licences/banks). Per the North Star and
+  §2 core loop ("if a screen doesn't make *upload→diagnosis→savings→act* better/wider, it waits"), Module L
+  is now **parked** (built, CI-green, behind SANDBOX) and we're back on the heart.
+- **Fixed the core-loop dead-end.** A user could upload → see ₹ savings → "Save to workspace" — but the
+  saved, **diagnosed** bill never surfaced in the app (`/app/bills` showed building-derived *mock* data).
+  Now `lib/api/bills.ts` has **`listAnalyzed()`** (live `GET /v1/bills` on Vercel SSR, maps the bill +
+  its diagnosis → recoverable ₹; fixture on static Pages), and `/app/bills` leads with a **"Your analyzed
+  bills"** card (Bill · DISCOM · Month · Amount · **Recoverable/yr**) + a "Recoverable found" StatCard +
+  an empty-state CTA to `/analyze`. Only diagnosed bills show (payment-tracking rows are excluded).
+- **Seed** now diagnoses the Acme sample bill (runs the engine → Diagnosis row) so the live view shows a
+  real ~₹26L-recoverable example out of the box; the fixture matches.
+
 ### 2026-06-09 (G7.5 — BBPS aggregator connector wired, env-gated)
 - **Implemented the real `bbps` connector** (`server/src/collections/connector-bbps.ts`) against the Setu
   Bharat Connect shape: OAuth client-credentials token (cached), async **fetch/pay (request → poll

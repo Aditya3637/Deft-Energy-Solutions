@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, IndianRupee, Activity, AlertTriangle } from "lucide-react";
+import { FileText, IndianRupee, TrendingDown, AlertTriangle, ArrowRight } from "lucide-react";
 
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -32,14 +33,16 @@ const statusVariant: Record<RecentBill["status"], "success" | "warning" | "destr
 };
 
 export default async function BillsPage() {
-  const [monthly, recentBills] = await Promise.all([
+  const [monthly, recentBills, analyzed] = await Promise.all([
     api.portfolio.monthly(),
     api.portfolio.recentBills(),
+    api.bills.listAnalyzed(),
   ]);
   const anomalies = recentBills.filter((b) => b.status === "Anomaly").length;
   const totalBilledThisMonth = recentBills
     .filter((b) => b.month === "May 2026")
     .reduce((s, b) => s + b.amountINR, 0);
+  const totalRecoverable = analyzed.reduce((s, b) => s + (b.recoverableInr ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -52,9 +55,58 @@ export default async function BillsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Bills tracked" value={TOTAL_BILLS_TRACKED.toLocaleString("en-IN")} hint="all time" icon={FileText} />
         <StatCard label="Billed this month" value={formatRupeesCompact(totalBilledThisMonth)} hint="May 2026" icon={IndianRupee} />
-        <StatCard label="Avg tariff" value="₹7.8/kWh" hint="blended across DISCOMs" icon={Activity} />
+        <StatCard label="Recoverable found" value={formatRupeesCompact(totalRecoverable)} hint={`${analyzed.length} analyzed bill${analyzed.length === 1 ? "" : "s"}`} icon={TrendingDown} tone={totalRecoverable > 0 ? "success" : "default"} />
         <StatCard label="Anomalies" value={String(anomalies)} hint="flagged for review" icon={AlertTriangle} tone={anomalies > 0 ? "warning" : "default"} />
       </div>
+
+      {/* Core loop closes here: bills you analyzed + the savings found, with the action to act. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your analyzed bills</CardTitle>
+          <CardDescription>
+            Bills you&rsquo;ve uploaded and confirmed — each with the recoverable savings our engine found.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className={analyzed.length === 0 ? undefined : "px-0"}>
+          {analyzed.length === 0 ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">
+                No analyzed bills yet. Upload a bill and the savings we find will show up here.
+              </p>
+              <Button asChild>
+                <Link href="/analyze">
+                  Analyze a bill <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader sticky>
+                <TableRow>
+                  <TableHead className="pl-6">Bill</TableHead>
+                  <TableHead>DISCOM</TableHead>
+                  <TableHead>Month</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead className="pr-6 text-right">Recoverable / yr</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {analyzed.map((b) => (
+                  <TableRow key={b.id}>
+                    <TableCell className="pl-6 font-medium">{b.title}</TableCell>
+                    <TableCell className="text-muted-foreground">{b.discom}</TableCell>
+                    <TableCell>{b.month}</TableCell>
+                    <TableCell className="tabular-nums">{formatRupees(b.amountInr)}</TableCell>
+                    <TableCell className="pr-6 text-right font-semibold text-primary tabular-nums">
+                      {b.recoverableInr ? formatRupees(b.recoverableInr) : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
