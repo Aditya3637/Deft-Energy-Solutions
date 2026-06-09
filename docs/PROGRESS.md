@@ -7,6 +7,17 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Plan review — added the BBPS-licence / real-money go-live track)
+- **Reviewed PLAN.md vs reality.** Stages A–F effectively complete; Stage G in progress: extraction
+  (code-complete, needs key), BBPS-fetch scaffold, payments ✅, collection-agent backend ✅ (sandbox).
+- **Added PLAN §7 — "Collection-agent go-live — the BBPS licence track (REAL MONEY)."** It sequences the
+  *regulated* path (not a code task): become an **Agent Institution under a BBPOU** (fast path) vs.
+  **become a BBPOU ourselves** (the literal "take the licence" — ~₹25cr net-worth/RBI, slow) vs.
+  **DISCOM-direct agency agreements**; then entity/KYC → sign BBPOU/DISCOM → escrow/sponsor bank →
+  NPCI/BBPOU certification + real biller IDs → **connect the code (the seam is already built; set
+  `COLLECTIONS_LIVE`, flip licences SANDBOX→ACTIVE) + settlement reconciliation** → operate. Stage G
+  updated to mark what's built and point at §7.
+
 ### 2026-06-09 (Collection-agent backend — money-safe, multi-DISCOM)
 - **Researched** how DISCOM collection agents work (BBPS Agent-Institution per-txn + T+1 NPCI;
   MSEDCL %-split current/arrears; UPPCL direct onboarding; BESCOM/TANGEDCO via BBPS) → `docs/COLLECTION-AGENT.md`.

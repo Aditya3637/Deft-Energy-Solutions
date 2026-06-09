@@ -145,9 +145,19 @@ Build the 203 screens in this priority, each meeting the Stage-3 DoD:
 ### Stage F — Wire real endpoints
 - [ ] Swap mock seam → real APIs behind identical signatures; Pact contract tests; no UI changes
 
-### Stage G — Integrations (SPEC_V2 §2)
-- [ ] OCR (Azure Doc Intelligence + Google fallback) → real 42-field extraction
-- [ ] IEX/PXIL prices, smart-meter/AMI, BMS/IoT (EMQX→Kafka→TimescaleDB), payments, WhatsApp/SMS/email,
+### Stage G — Integrations (SPEC_V2 §2) — IN PROGRESS
+- [x] **Bill extraction (OCR/VLM):** real, provider-agnostic pipeline — Anthropic vision (default) +
+      OpenAI-compatible/Llama/Gemini + **digital-PDF text-parse**; per-DISCOM templates; confidence +
+      mandatory human review; corrections-capture loop; accuracy dashboard. *(code-complete; needs a
+      vision-LLM key on the backend to run live.)*
+- [x] **BBPS / DISCOM-portal bill fetch:** scaffolded behind a provider seam (mock + generic aggregator
+      adapter); 15-DISCOM catalog. *(needs a real aggregator account to fetch live.)*
+- [x] **Payments & due-date tracking** (multi-asset: overdue / due-soon / paid-on-time, derived status).
+- [x] **Collection-agent backend (SANDBOX):** money in integer paise, idempotent, per-DISCOM license +
+      commission models, remittance/float, dunning worklist; commission math invariant-tested in CI.
+      Connector seam ready. *(real money is gated on the BBPS license track — see §7.)*
+- [ ] **Go live on real money — the BBPS license track (§7).**
+- [ ] IEX/PXIL prices, smart-meter/AMI, BMS/IoT (EMQX→Kafka→TimescaleDB), WhatsApp/SMS/email,
       DISCOM tariff scraping
 
 ### Stage H — Harden
@@ -179,3 +189,49 @@ Build the 203 screens in this priority, each meeting the Stage-3 DoD:
 
 Default: when something is ambiguous, build the **lowest-friction** interpretation and note the assumption
 in PROGRESS.md rather than blocking.
+
+---
+
+## 7. Collection-agent go-live — the BBPS license track (REAL MONEY)
+
+> The collection-agent backend is built and money-safe (Stage G, SANDBOX). Going live is **not a code
+> task** — it's a regulated onboarding track with external dependencies. The code already has the seam
+> (`server/src/collections/connector.ts`, `lib/api/billfetch.ts`, env `COLLECTIONS_LIVE`); this section is
+> the sequence to obtain the licence and connect it. See [COLLECTION-AGENT.md](./COLLECTION-AGENT.md).
+
+**Decide the standing (two ways to "have the BBPS licence"):**
+- **G7.0a — Agent Institution (AI) under a BBPOU** *(recommended first — fastest to revenue).* Onboard
+  beneath an existing RBI-authorised Bharat Connect/BBPS Operating Unit (e.g. an aggregator: Setu/Pine
+  Labs, BillAvenue/Euronet, Cashfree, PayU). We get agent access to many DISCOM billers at once, collect,
+  and earn per-txn commission; settlement is T+1 via the BBPOU's sponsor bank.
+- **G7.0b — Become a BBPOU ourselves** *(the literal "take the licence to ourselves" — heavy/slow).* RBI
+  authorisation under the PSS Act; substantial net-worth requirement (~₹25 cr historically), audits,
+  ongoing compliance. Multi-quarter+; pursue once volume justifies it. Run G7.0a in parallel meanwhile.
+- **G7.0c — DISCOM-direct agency agreements** (MSEDCL collection-centre, UPPCL onboarding) in parallel for
+  the %-commission / current-vs-arrears models, where direct beats BBPS economics.
+
+**Onboarding sequence (track each as a checklist item):**
+- [ ] **G7.1 Entity & compliance:** company KYC/AML, GST, RBI posture (PA/PG if we ever hold consumer
+      funds — prefer pass-through/escrow so we don't), DPDP data-handling sign-off.
+- [ ] **G7.2 Pick & sign the BBPOU/aggregator** (AI agreement) **and/or** DISCOM agency agreements.
+- [ ] **G7.3 Settlement banking:** open the sponsor / nodal / escrow account; map the settlement flow
+      (consumer → escrow → DISCOM; commission → us). No money sits on our books.
+- [ ] **G7.4 Certification / UAT:** complete the BBPOU + NPCI test suite (bill-fetch + bill-pay cases) per
+      DISCOM biller; obtain real **biller IDs** → fill `server/src/billfetch/biller-catalog.ts`.
+- [ ] **G7.5 Connect the code (seam already there):**
+      - implement the `bbps` connector (`connector.ts`) + the live `billfetch`/`extract` providers against
+        the chosen aggregator's API; store creds as secrets (env), never in the repo;
+      - set `COLLECTIONS_LIVE=1`; flip each `DiscomLicense` `SANDBOX → ACTIVE` only after its certification;
+      - wire **settlement reconciliation (DSR)**: match the aggregator/DISCOM daily settlement file to our
+        `Remittance` rows; surface mismatches.
+- [ ] **G7.6 Operate:** refunds/chargebacks, dispute handling, commission invoicing/reconciliation,
+      immutable audit trail, per-DISCOM monitoring, and the field collection route (`/field/collection`)
+      wired to live worklist + proof-of-payment.
+
+**Money-safety guardrails (already enforced in code, keep enforcing):** integer paise only; idempotency
+keys (no double-collect); explicit state machine; commission math invariant-tested in CI; licences default
+SANDBOX; nothing moves real funds until G7.5 flips a certified licence to ACTIVE.
+
+**Definition of "live" for one DISCOM:** a real bill fetched from the rail → consumer payment captured to
+escrow → remitted to the DISCOM and reconciled against its settlement file → commission booked — with a
+full audit trail. Ship DISCOM-by-DISCOM, not all at once.
