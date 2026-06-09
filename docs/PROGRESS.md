@@ -1,11 +1,19 @@
 # Deft Energy Solutions — Progress Log (LIVING)
 
-> Updated every working session. Newest entry on top. See [PLAN.md](./PLAN.md) for stages & DoD.
+> Updated every working session. Newest entry on top. See [STORYLINE.md](./STORYLINE.md) for the whole
+> story (why/what/how) and [PLAN.md](./PLAN.md) for stages & DoD.
 
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
+
+### 2026-06-10 (Docs — STORYLINE.md: the whole story, fetchable anywhere)
+- Added **`docs/STORYLINE.md`** — the canonical narrative: **why** (C&I bills leak money, hidden + untapped),
+  **what** (the five-rung savings ladder + core loop + Savings Stack + monetization), **how delivered**
+  (screens-first seam, dual Pages/Vercel build, NestJS+Prisma+RLS, provider-seam integrations, CI invariants,
+  git-only workflow), and **how modules are made** (the repeatable pure-core → service → controller → seam →
+  page → CI recipe, and the provider-seam variant; the no-fabrication discipline). Linked from TODO + PROGRESS.
 
 ### 2026-06-10 (Notification delivery layer + magic-link/dunning wired)
 - **Built the retention/comms engine** (same provider-seam pattern). `server/src/notifications/`:

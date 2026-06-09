@@ -1,7 +1,8 @@
 # Deft Energy — TODO / Backlog (LIVING)
 
 > Fetch this from any machine: it's the running picture of what's built and what's left.
-> See [PLAN.md](./PLAN.md) (strategy), [PROGRESS.md](./PROGRESS.md) (session log).
+> See [STORYLINE.md](./STORYLINE.md) (the whole story), [PLAN.md](./PLAN.md) (strategy),
+> [PROGRESS.md](./PROGRESS.md) (session log).
 >
 > **Bar: production-grade, live product — not a pilot.** Every module ships complete, no gaps,
 > and is tested from a customer angle (a persona + ~7–8 real bills across multiple DISCOMs).
