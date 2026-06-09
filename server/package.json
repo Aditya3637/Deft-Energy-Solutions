@@ -16,6 +16,7 @@
     "auth:check": "ts-node --transpile-only scripts/auth-check.ts",
     "persona:check": "ts-node --transpile-only scripts/persona-discom-check.ts",
     "compliance:check": "ts-node --transpile-only scripts/compliance-check.ts",
+    "markets:check": "ts-node --transpile-only scripts/markets-check.ts",
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {

@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Breadth #7 — B6 Markets & assets wired to live data)
+- **Carbon, Markets and Assets now derive from the org's real data.** New `server/src/markets/`
+  (`markets.compute.ts` is pure/DB-free → CI-testable):
+  - `GET /v1/carbon` — **Scope 2 auto from bills** (Σ kWh × CEA grid factor 0.00071 tCO₂e/kWh, split
+    per-DISCOM); **Scope 1 & 3 from the recorded GHG inventory** (0 when none — never invented).
+  - `GET /v1/markets` — **open-access economics from real bill line-items** (load, blended grid rate,
+    cross-subsidy/additional/wheeling charges); eligibility on the ≥1 MW rule; **carbon-credit
+    *potential*** from avoided emissions. Exchange/CCC prices are indicative (no live feed yet).
+  - `GET /v1/assets` — **BESS sizing/savings** from metered peak demand + ToD spread + billed demand
+    rate; **microgrid + VPP** from the `Equipment` registry. Empty org → all zeros (no fabricated DER).
+- **Frontend** `lib/api/markets.ts` live-fetches once per render (React `cache`), fixture fallback
+  off-server. `oaEconomics()` now takes the OA object so it uses live data. Markets page **labels
+  IEX prices & carbon-credit values "indicative"** pending Stage-G feeds. Feeds `/carbon`, `/markets`,
+  `/assets` (and the markets data the executive view references).
+- **Customer-angle test** `scripts/markets-check.ts` (CI): personas across MSEDCL/BESCOM/TANGEDCO/TPDDL —
+  HT/OA-eligible, sub-MW, DER-registry, recorded-inventory, and brand-new — asserting kWh→Scope-2,
+  OA eligibility, BESS math, honest zeros on empty orgs, and finite/non-negative bounds.
+
 ### 2026-06-09 (Breadth #7 — Compliance wired to live data)
 - **Compliance is now derived from the org's real data**, not a fixture. New `server/src/compliance/`:
   `GET /v1/compliance` (RLS-scoped) reads the org's bills, buildings and GHG inventory and computes the

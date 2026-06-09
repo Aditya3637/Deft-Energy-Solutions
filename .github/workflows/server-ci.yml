@@ -45,6 +45,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/persona-discom-check.ts
       - name: Compliance scorecard invariants
         run: npx ts-node --transpile-only scripts/compliance-check.ts
+      - name: Energy-markets & DER invariants
+        run: npx ts-node --transpile-only scripts/markets-check.ts
 
   docker:
     runs-on: ubuntu-latest

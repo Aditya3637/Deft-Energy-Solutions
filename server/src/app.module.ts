@@ -15,6 +15,7 @@ import { CorrectionsModule } from "./corrections/corrections.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { CollectionsModule } from "./collections/collections.module";
 import { ComplianceModule } from "./compliance/compliance.module";
+import { MarketsModule } from "./markets/markets.module";
 import { AuthModule } from "./auth/auth.module";
 import { AccountModule } from "./account/account.module";
 
@@ -36,6 +37,7 @@ import { AccountModule } from "./account/account.module";
     PaymentsModule,
     CollectionsModule,
     ComplianceModule,
+    MarketsModule,
   ],
   controllers: [HealthController],
 })

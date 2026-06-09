@@ -53,11 +53,19 @@ export const OA = {
   steps: ["Eligibility", "State charges", "SLDC NOC", "Scheduling"],
 };
 
-export function oaEconomics() {
-  const chargesTotal = OA.charges.reduce((s, c) => s + c.rate, 0);
-  const landed = OA.exchangeRateINR + chargesTotal;
-  const netPerUnit = OA.gridRateINR - landed;
-  const annualINR = Math.round(netPerUnit * OA.monthlyKwh * 12);
+export type OpenAccessData = {
+  gridRateINR: number;
+  exchangeRateINR: number;
+  monthlyKwh: number;
+  charges: { name: string; rate: number; indicative?: boolean }[];
+};
+
+/** Open-access economics from an OA object (live-derived or the fixture). */
+export function oaEconomics(oa: OpenAccessData = OA) {
+  const chargesTotal = oa.charges.reduce((s, c) => s + c.rate, 0);
+  const landed = oa.exchangeRateINR + chargesTotal;
+  const netPerUnit = oa.gridRateINR - landed;
+  const annualINR = Math.round(netPerUnit * oa.monthlyKwh * 12);
   return { chargesTotal, landed, netPerUnit, annualINR };
 }
 

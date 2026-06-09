@@ -24,7 +24,7 @@ export default async function MarketsPage() {
     api.markets.iex(),
     api.markets.carbonCredits(),
   ]);
-  const oa = oaEconomics();
+  const oa = oaEconomics(OA);
   const creditValue = CARBON_CREDITS.held * CARBON_CREDITS.ccPriceINR;
 
   return (
@@ -105,7 +105,9 @@ export default async function MarketsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Day-ahead price (DAM)</CardTitle>
-              <CardDescription>₹/kWh by 2-hour block. Red blocks are above ₹6.</CardDescription>
+              <CardDescription>
+                ₹/kWh by 2-hour block. Red blocks are above ₹6. Indicative reference — the live IEX feed ships at Stage G.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <BarChart
@@ -120,9 +122,9 @@ export default async function MarketsPage() {
         {/* Carbon credits */}
         <TabsContent value="carbon" className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Credits held" value={formatIndianNumber(CARBON_CREDITS.held)} hint="CCTS certificates" icon={Award} />
-            <StatCard label="Portfolio value" value={formatRupeesCompact(creditValue)} hint={`@ ₹${CARBON_CREDITS.ccPriceINR}/CCC`} icon={IndianRupee} tone="success" />
-            <StatCard label="Retired" value={formatIndianNumber(CARBON_CREDITS.retired)} hint="for compliance" icon={Check} />
+            <StatCard label="Credit potential" value={formatIndianNumber(CARBON_CREDITS.held)} hint="est. from avoided emissions" icon={Award} />
+            <StatCard label="Indicative value" value={formatRupeesCompact(creditValue)} hint={`@ ₹${CARBON_CREDITS.ccPriceINR}/CCC ref.`} icon={IndianRupee} tone="success" />
+            <StatCard label="Retired" value={formatIndianNumber(CARBON_CREDITS.retired)} hint="registry — Stage G" icon={Check} />
           </div>
           <Card>
             <CardHeader>

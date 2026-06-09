@@ -50,7 +50,14 @@
    - ✅ **Compliance** — `GET /v1/compliance` derives the scorecard / BRSR Principle-6 / ESG-Environment
      from the org's real bills, buildings and GHG inventory (no-false-positive discipline; CI invariant
      `compliance-check.ts` over 5 multi-DISCOM personas). Feeds both `/compliance` and `/executive`.
-   - Still mock: capex / carbon / markets / assets / marketplace / training.
+   - ✅ **B6 — Carbon / Markets / Assets** — `GET /v1/carbon` (Scope 2 from bills × CEA grid factor,
+     per-DISCOM split; Scope 1/3 from recorded GHG inventory), `GET /v1/markets` (open-access economics
+     from real bill line-items + carbon-credit *potential* from avoided emissions), `GET /v1/assets`
+     (BESS sizing + microgrid + VPP from peak demand, ToD spread and the Equipment registry). No
+     fabrication when data is absent; external inputs (IEX price, CCC spot) labelled *indicative* in the
+     UI pending the Stage-G feeds. CI invariant `markets-check.ts` over multi-DISCOM personas.
+     *Deferred:* live IEX day-ahead feed + carbon-credit registry (Stage-G integrations).
+   - Still mock: **B7** marketplace / training / leaderboard; capex.
 
 ---
 
