@@ -1,0 +1,35 @@
+# One-command local run of the backend + Postgres:
+#     docker compose up --build
+# Then: http://localhost:4000/v1/health  ·  GET /v1/buildings  ·  POST /v1/bills
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: deft
+      POSTGRES_PASSWORD: deft
+      POSTGRES_DB: deft
+    ports:
+      - "5432:5432"
+    volumes:
+      - deft_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deft"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    environment:
+      DATABASE_URL: "postgresql://deft:deft@db:5432/deft?schema=public"
+      PORT: "4000"
+      CORS_ORIGINS: "http://localhost:3000,https://aditya3637.github.io"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  deft_pg:

@@ -10,8 +10,8 @@
     "start:dev": "ts-node-dev --respawn src/main.ts",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:rls": "psql \"$DATABASE_URL\" -f prisma/rls.sql",
-    "seed": "ts-node prisma/seed.ts"
+    "prisma:rls": "prisma db execute --file prisma/rls.sql --schema prisma/schema.prisma",
+    "seed": "ts-node src/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

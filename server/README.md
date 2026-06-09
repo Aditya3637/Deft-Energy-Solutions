@@ -23,14 +23,31 @@ from the Next.js frontend — it does not deploy to GitHub Pages.
 
 ## Run it
 
+**Easiest — Docker (server + Postgres), one command from the repo root:**
+
 ```bash
-cp .env.example .env          # point DATABASE_URL at a Postgres
-npm install
-npx prisma migrate dev        # create tables
-npm run prisma:rls            # apply RLS policies (psql)
-npm run seed                  # demo org + buildings + a sample bill
-npm run start:dev             # http://localhost:4000/v1/health
+docker compose up --build      # boots Postgres, syncs schema, applies RLS, seeds, serves
+# → http://localhost:4000/v1/health
 ```
+
+**Or natively:**
+
+```bash
+cp .env.example .env           # point DATABASE_URL at a Postgres
+npm install
+npx prisma db push             # create tables
+npm run prisma:rls             # apply RLS policies
+npm run seed                   # demo org + buildings + a sample bill
+npm run start:dev              # http://localhost:4000/v1/health
+```
+
+## Deploy (managed Postgres + auto-deploy)
+
+`render.yaml` (repo root) is a Render Blueprint: connect this repo to Render
+(**New → Blueprint**) and it provisions a managed Postgres + this service from
+`server/Dockerfile`, injects `DATABASE_URL`, and on boot runs `prisma db push` →
+applies RLS → seeds → serves. Health check: `/v1/health`. Auto-deploys on push.
+(Any Docker host works — point `DATABASE_URL` at a Postgres and run the image.)
 
 ## Endpoints (prefix `/v1`)
 

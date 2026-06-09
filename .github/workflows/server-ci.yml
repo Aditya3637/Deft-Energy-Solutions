@@ -35,3 +35,11 @@ jobs:
         run: npx prisma generate
       - name: Type-check & build
         run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    # Verifies the deploy image builds (prisma generate + tsc inside the image).
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t deft-energy-server ./server

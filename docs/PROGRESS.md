@@ -5,9 +5,11 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend (A–D + C + journey) ✅ · **Stage E backend foundation ✅ DONE (started)**
-- **Workspaces:** frontend (root, → Pages) and **backend (`server/`, NestJS + Prisma + Postgres)** — separate;
-  backend doesn't deploy to Pages. Two CI workflows: Pages deploy (frontend) + **Server CI** (compile-verify).
+- **Active stage:** Frontend (A–D + C + journey) ✅ · **Stage E backend (engine + persistence + deploy setup) ✅**
+- **Workspaces:** frontend (root, → Pages) and **backend (`server/`, NestJS + Prisma + Postgres)** — separate.
+  Server CI compile- AND Docker-build-verifies the backend. **Deploy:** `render.yaml` blueprint (managed
+  Postgres, auto-deploy) or `docker compose up --build` locally. Final "go live" = connect the repo to
+  Render (a hosting account I can't create) — everything else is wired.
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
@@ -44,6 +46,18 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage E — deploy setup)
+- **Dockerised** the backend (`server/Dockerfile`, multi-stage). On boot the container runs `prisma db push`
+  → applies RLS → seeds (idempotent) → serves.
+- **`render.yaml`** blueprint: managed Postgres + the web service from the repo, `DATABASE_URL` injected,
+  health check `/v1/health`, auto-deploy. **`docker-compose.yml`** for one-command local runs.
+- **RLS hardened** with `FORCE ROW LEVEL SECURITY` (real isolation even with a single owner role on managed
+  Postgres). Moved the seed to `src/seed.ts` — RLS-aware (sets `app.current_org` in a transaction) and
+  idempotent — so it compiles to `dist/seed.js` and runs on boot; `main` binds `0.0.0.0`.
+- **Server CI** now also `docker build`s the image, verifying the deploy artifact.
+- Honest limit: I can't create a Render account or run Docker here, so I can't click "go live". Everything
+  is wired; connecting the repo to Render (or `docker compose up`) makes it run.
 
 ### 2026-06-09 (Stage E — diagnosis engine ported + persisted)
 - Ported the **58-check diagnosis engine** server-side (`server/src/diagnosis/` — loss-taxonomy + engine,

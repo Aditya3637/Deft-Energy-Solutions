@@ -14,11 +14,13 @@ LANGUAGE sql STABLE AS $$
   SELECT NULLIF(current_setting('app.current_org', true), '')::uuid
 $$;
 
--- The tenant root.
+-- The tenant root. FORCE so even the table owner (the app's connection role on
+-- managed Postgres) is subject to the policy — RLS is real with a single role.
 ALTER TABLE "Organisation" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Organisation" FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS org_isolation ON "Organisation";
 CREATE POLICY org_isolation ON "Organisation"
-  USING (id = current_org());
+  USING (id = current_org()) WITH CHECK (id = current_org());
 
 -- All org-scoped tables: isolate by orgId.
 DO $$
@@ -29,6 +31,7 @@ BEGIN
     'AlertInstance','Document','ActivityLog','CapexRequest','GhgInventory'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS org_isolation ON %I', t);
     EXECUTE format(
       'CREATE POLICY org_isolation ON %I USING ("orgId" = current_org()) WITH CHECK ("orgId" = current_org())',

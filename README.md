@@ -18,7 +18,9 @@ Web app for Deft Energy Solutions — built with [Next.js](https://nextjs.org) (
 
 - **Frontend** (repo root) — Next.js app, deployed to GitHub Pages.
 - **Backend** ([`server/`](server/)) — NestJS + Prisma + PostgreSQL (Stage E). Separate workspace; does
-  not deploy to Pages. Compile-verified by its own [Server CI](.github/workflows/server-ci.yml).
+  not deploy to Pages. Compile- and Docker-build-verified by its own
+  [Server CI](.github/workflows/server-ci.yml). Deploy via `render.yaml` (managed Postgres) or run locally
+  with `docker compose up --build`.
 
 **Design North Star:** intuitive, simple, minimum friction. Core loop = *upload a bill → instant diagnosis →
 quantified savings → one recommended action.* Designed for ~50,000 bills/month and ~5,000 monthly users.
