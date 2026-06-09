@@ -26,6 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Build static site
+        # Set the repo variable NEXT_PUBLIC_API_URL (Settings → Variables) once the
+        # backend is live to flip client-side actions from demo to the real API.
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

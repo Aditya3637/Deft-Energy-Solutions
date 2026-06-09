@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { GROUP_ORDER, type ExtractedField } from "@/lib/api/bills";
+import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
+import { useToast } from "@/components/ui/toast";
 import { fullDiagnose } from "@/lib/diagnosis";
 import { TOTAL_CHECKS, CATEGORIES, DATA_NEED_LABELS } from "@/lib/loss-taxonomy";
 import {
@@ -289,7 +290,25 @@ function ResultStep({
 }) {
   const diag = React.useMemo(() => fullDiagnose(fields), [fields]);
   const [showAll, setShowAll] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const { toast } = useToast();
   const get = (key: string) => fields.find((f) => f.key === key)?.value ?? "";
+
+  const onSave = async () => {
+    setSaving(true);
+    try {
+      const r = await bills.create(fields);
+      toast(
+        r.saved
+          ? { title: "Saved to your workspace", description: "Stored and diagnosed on the server." }
+          : { title: "Saved to your workspace", description: "Demo mode — connect a backend to persist it." },
+      );
+    } catch {
+      toast({ title: "Couldn't save", description: "The backend isn't reachable right now." });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -505,6 +524,9 @@ function ResultStep({
         <div className="flex gap-2">
           <Button variant="outline" onClick={onReset}>
             <RotateCcw className="h-4 w-4" /> Analyze another
+          </Button>
+          <Button variant="outline" onClick={onSave} disabled={saving}>
+            {saving ? "Saving…" : "Save to workspace"}
           </Button>
           <Button asChild>
             <Link href="/app">

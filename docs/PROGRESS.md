@@ -5,7 +5,11 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend (A–D + C + journey) ✅ · **Stage E backend (engine + persistence + deploy setup) ✅**
+- **Active stage:** Frontend ✅ · Stage E backend (engine + persistence + deploy) ✅ · **Stage F wiring ✅ (client-side)**
+- **Stage F:** the `api` seam reads `NEXT_PUBLIC_API_URL`. Unset → fixtures (the Pages demo). Set → client-side
+  actions hit the live API. Wired the clean live path: **/analyze "Save to workspace" → POST /v1/bills**
+  (persists + diagnoses server-side). Server-component pages stay build-time fixtures on the static export
+  until the backend reaches data parity / a non-static host. Deploy build embeds `vars.NEXT_PUBLIC_API_URL`.
 - **Workspaces:** frontend (root, → Pages) and **backend (`server/`, NestJS + Prisma + Postgres)** — separate.
   Server CI compile- AND Docker-build-verifies the backend. **Deploy:** `render.yaml` blueprint (managed
   Postgres, auto-deploy) or `docker compose up --build` locally. Final "go live" = connect the repo to
@@ -46,6 +50,17 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage F — wire the seam to the live backend)
+- `lib/api/client.ts` — `getApiBase()`/`isApiConfigured()`/`apiFetch()` reading `NEXT_PUBLIC_API_URL`
+  (sends the demo `x-org-id`).
+- `lib/api/bills.ts` — `bills.create(fields)`: POST /v1/bills when configured (maps the 42 editable fields
+  to the server DTO), else a demo no-op. Same signature both ways.
+- `/analyze` result gets a **"Save to workspace"** button → live persist + server diagnosis (toast feedback).
+- `.env.example` (frontend); Pages deploy build embeds `vars.NEXT_PUBLIC_API_URL` so setting that repo
+  variable + redeploy flips the live path on.
+- Static-export reality documented: only client-side actions can go live on Pages; server-component pages
+  stay build-time fixtures until parity / a non-static host.
 
 ### 2026-06-09 (Stage E — deploy setup)
 - **Dockerised** the backend (`server/Dockerfile`, multi-stage). On boot the container runs `prisma db push`
