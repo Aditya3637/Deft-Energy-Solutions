@@ -22,8 +22,12 @@ type Dict = Record<string, string>;
 
 const en: Dict = {
   "nav.dashboard": "Dashboard",
+  "nav.savings": "Savings",
   "nav.executive": "Executive",
   "nav.bills": "Bills",
+  "nav.payments": "Payments",
+  "nav.collections": "Collections",
+  "nav.accuracy": "Accuracy",
   "nav.buildings": "Buildings",
   "nav.tasks": "Tasks",
   "nav.alerts": "Alerts",
@@ -43,8 +47,12 @@ const en: Dict = {
 
 const hi: Dict = {
   "nav.dashboard": "डैशबोर्ड",
+  "nav.savings": "बचत",
   "nav.executive": "कार्यकारी",
   "nav.bills": "बिल",
+  "nav.payments": "भुगतान",
+  "nav.collections": "वसूली",
+  "nav.accuracy": "सटीकता",
   "nav.buildings": "इमारतें",
   "nav.tasks": "कार्य",
   "nav.alerts": "अलर्ट",

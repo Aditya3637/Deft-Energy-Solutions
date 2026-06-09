@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Story/UX — Savings Stack + nav regrouped by the value ladder)
+- **Made the UI tell the money story.** The product had 19 sibling tools but no single view of how they
+  add up; the nav was a flat feature list. Fixed both.
+- **Savings Stack** (`/app/savings`, nav "Overview › Savings"): one screen attributing ₹ to every lever —
+  **Recover** (diagnosis, no-capex) · **Reduce** (efficiency — the honest *unmeasured* rung, call-to-action)
+  · **Reprice** (open access / IEX) · **Generate** (BESS/solar) · **Earn** (carbon credits + cashback,
+  shown as *potential*). Pure `lib/savings-stack.ts#buildSavingsStack` composes numbers the **live seams
+  already compute** (portfolio savings, `oaEconomics`, BESS demand+arbitrage, carbon value) — nothing
+  invented. Headline = sum of *quantified* (live) rungs + "% of spend"; potential shown separately; each
+  rung links to where you act. Honest states: live / potential / unlock.
+- **Nav regrouped by the ladder:** flat 19-item list → **Overview · Recover · Reprice & generate ·
+  Earn & comply · More** (`NAV_GROUPS`); sidebar renders section headers (`app-shell`). Flattened
+  `PRIMARY_NAV` kept for lookups; field nav unchanged.
+- **Bonus fix:** sidebar labels now fall back to the item's own label when an i18n key is missing
+  (Payments/Collections/Accuracy were rendering raw `nav.*` keys); added the missing en+hi keys + `nav.savings`.
+- *Still flagged:* the **Reduce/efficiency** module is the genuinely-unbuilt rung (shows as "unlock"); the
+  marketing **landing still sells only lever 1** — rewrite to the full ladder is the next story fix.
+
 ### 2026-06-09 (Monetization #4 — dunning grace + in-app upgrade prompt)
 - **Two revenue-retention levers, both shipped.** No schema change.
 - **Dunning (don't lose a customer to one failed charge):** `subscription.pending` →

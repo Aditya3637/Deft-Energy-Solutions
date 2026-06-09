@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/layout/brand";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { useLocale } from "@/components/i18n/locale-provider";
-import { PRIMARY_NAV, type NavItem } from "@/components/layout/nav-config";
+import { NAV_GROUPS } from "@/components/layout/nav-config";
 
 /**
  * Authenticated app shell: fixed sidebar + topbar, single scroll region for
@@ -18,13 +18,7 @@ import { PRIMARY_NAV, type NavItem } from "@/components/layout/nav-config";
  * pinned). Mobile uses an overlay drawer with Esc-to-close and background
  * scroll lock.
  */
-export function AppShell({
-  children,
-  nav = PRIMARY_NAV,
-}: {
-  children: React.ReactNode;
-  nav?: NavItem[];
-}) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { t } = useLocale();
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -51,28 +45,43 @@ export function AppShell({
   const isActive = (href: string) =>
     href === "/app" ? pathname === href : pathname.startsWith(href);
 
+  // Use the translation if present, else the item's own label (so newly added
+  // items never render as a raw "nav.x" key).
+  const labelOf = (label: string) => {
+    const key = `nav.${label.toLowerCase()}`;
+    const translated = t(key);
+    return translated === key ? label : translated;
+  };
+
   const NavLinks = () => (
-    <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin p-3">
-      {nav.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {t(`nav.${item.label.toLowerCase()}`)}
-          </Link>
-        );
-      })}
+    <nav className="flex-1 space-y-4 overflow-y-auto scrollbar-thin p-3">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} className="space-y-1">
+          <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            {group.label}
+          </div>
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {labelOf(item.label)}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 
