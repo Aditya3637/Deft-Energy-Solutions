@@ -5,7 +5,30 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅
+- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
+
+### 2026-06-09 (Stage G — real bill extraction)
+- **Replaced the simulated upload with real vision OCR.** New backend module `server/src/extract/`:
+  - `POST /v1/extract` — multipart upload (field `file`, ≤25 MB; PDF / JPEG / PNG / WebP).
+  - Sends the bill to the Anthropic Messages API (raw `fetch`, no SDK) as a base64 `document` (PDF) or
+    `image` block — handles clean digital PDFs **and** scanned/photo bills via the model's vision.
+  - **Structured output via forced tool use** (`emit_bill_fields`): the 42 canonical keys are an enum; the
+    model returns only the fields it can actually read, each with a 0–1 **confidence**. No-false-positive
+    by construction — omission is meaningful, nothing is inferred/derived.
+  - Prompt-caches the stable prefix (tool schema + system + field reference); the per-bill PDF sits after
+    the breakpoint so it never invalidates the cache.
+  - Service merges hits into the full 42-row `ExtractedField[]` (key/label/group/unit/value/confidence),
+    flags <0.8 confidence, returns `{fields, model, found, total, lowConfidence}`.
+  - Model is env-configurable (`EXTRACT_MODEL`, default `claude-opus-4-8`; set `claude-haiku-4-5` for
+    ~5× cheaper at volume). Needs `ANTHROPIC_API_KEY` — without it the endpoint 503s.
+- **Frontend wired to the real endpoint.** `/analyze` now uploads the chosen file → `lib/api/extract.ts`
+  → `POST /v1/extract`, feeding the existing review/correct screen. Graceful fallback to the sample bill
+  when no backend is configured or extraction fails (with an honest banner). Review header now shows
+  "read N of 42", flags low-confidence and not-found fields for the user to confirm.
+- **Deploy:** added `ANTHROPIC_API_KEY` (`sync:false`) + `EXTRACT_MODEL` to `render.yaml` and
+  `.env.example`. **Remaining to go live: set `ANTHROPIC_API_KEY` in the Render dashboard.**
+- **Why this is the real thing now:** earlier the upload ignored the file and returned the Acme sample
+  (so both the fields and the ₹ evaluation were sample-based). It now reads the uploaded bill.
 - **Backend is live:** `https://deft-energy-server.onrender.com` (Render free tier — sleeps when idle; free
   Postgres `deft-postgres`/oregon expires ~90 days). Verified: `/v1/health` 200, RLS-scoped `/v1/buildings`,
   `POST /v1/bills` persists + auto-runs the 58-check engine (matches the frontend). Fixed an RLS bug on the

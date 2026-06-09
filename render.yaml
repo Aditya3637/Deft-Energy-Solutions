@@ -27,3 +27,10 @@ services:
         value: "4000"
       - key: CORS_ORIGINS
         value: "https://aditya3637.github.io,https://deft-energy-solutions.vercel.app,http://localhost:3000"
+      # Bill extraction (Stage G). Set the key in the Render dashboard — never commit it.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Vision model for extraction. Default claude-opus-4-8 (most accurate);
+      # set claude-haiku-4-5 to trade some accuracy for ~5x lower cost at volume.
+      - key: EXTRACT_MODEL
+        value: "claude-opus-4-8"

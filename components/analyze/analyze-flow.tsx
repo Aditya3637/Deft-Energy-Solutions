@@ -18,6 +18,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
+import { extract } from "@/lib/api/extract";
 import { useToast } from "@/components/ui/toast";
 import { fullDiagnose } from "@/lib/diagnosis";
 import { TOTAL_CHECKS, CATEGORIES, DATA_NEED_LABELS } from "@/lib/loss-taxonomy";
@@ -53,10 +54,26 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
   const [fields, setFields] = React.useState<ExtractedField[]>(() =>
     sampleFields.map((f) => ({ ...f })),
   );
+  // Set when extraction fell back to the sample (no backend / unreadable file).
+  const [notice, setNotice] = React.useState<string | null>(null);
 
-  const start = React.useCallback(() => setStep("extracting"), []);
+  // Stage G: upload the chosen file to the real extraction endpoint. A null
+  // file ("try the sample") and any backend failure both fall back to the
+  // sample bill, so the walkthrough always completes.
+  const runExtract = React.useCallback(
+    async (file: File | null) => {
+      setStep("extracting");
+      const out = await extract.fromFile(file);
+      setFields(out.fields.map((f) => ({ ...f })));
+      setNotice(out.live ? null : out.note ?? null);
+      setStep("review");
+    },
+    [],
+  );
+
   const reset = React.useCallback(() => {
     setFields(sampleFields.map((f) => ({ ...f })));
+    setNotice(null);
     setStep("upload");
   }, [sampleFields]);
 
@@ -65,13 +82,6 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
       prev.map((f) => (f.key === key ? { ...f, value, confidence: 1 } : f)),
     );
   }, []);
-
-  // Simulated extraction; replaced by real OCR at Stage F.
-  React.useEffect(() => {
-    if (step !== "extracting") return;
-    const t = setTimeout(() => setStep("review"), 1900);
-    return () => clearTimeout(t);
-  }, [step]);
 
   const stepIndex = step === "result" ? 2 : step === "review" ? 1 : 0;
 
@@ -82,11 +92,12 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         <Stepper current={stepIndex as 0 | 1 | 2} />
       </div>
 
-      {step === "upload" && <UploadStep onStart={start} />}
+      {step === "upload" && <UploadStep onPick={runExtract} />}
       {step === "extracting" && <ExtractingStep />}
       {step === "review" && (
         <ReviewStep
           fields={fields}
+          notice={notice}
           onChange={updateField}
           onBack={() => setStep("upload")}
           onNext={() => setStep("result")}
@@ -101,7 +112,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
 
 /* ---------------------------------------------------------------- Upload */
 
-function UploadStep({ onStart }: { onStart: () => void }) {
+function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
   const [dragging, setDragging] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -116,7 +127,7 @@ function UploadStep({ onStart }: { onStart: () => void }) {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          onStart();
+          onPick(e.dataTransfer.files?.[0] ?? null);
         }}
         className={cn(
           "flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-16 text-center transition-colors",
@@ -146,20 +157,20 @@ function UploadStep({ onStart }: { onStart: () => void }) {
           capture="environment"
           className="sr-only"
           aria-label="Upload a bill"
-          onChange={() => onStart()}
+          onChange={(e) => onPick(e.target.files?.[0] ?? null)}
         />
       </div>
 
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <span>No bill handy?</span>
-        <Button variant="link" className="h-auto p-0" onClick={onStart}>
+        <Button variant="link" className="h-auto p-0" onClick={() => onPick(null)}>
           Try it with a sample bill
         </Button>
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        Preview note: this walkthrough runs on a sample bill. Live extraction
-        (digital-PDF parse, DISCOM fetch and VLM OCR with confidence scoring) lands at Stage G —
-        see <code>docs/OCR-STRATEGY.md</code>.
+        Upload a real bill (PDF or photo) and we read it with vision OCR, scoring
+        each field&rsquo;s confidence so you only confirm what&rsquo;s uncertain. No live
+        backend? We fall back to a sample bill — see <code>docs/OCR-STRATEGY.md</code>.
       </p>
     </div>
   );
@@ -202,26 +213,39 @@ function ExtractingStep() {
 
 function ReviewStep({
   fields,
+  notice,
   onChange,
   onBack,
   onNext,
 }: {
   fields: ExtractedField[];
+  notice: string | null;
   onChange: (key: string, value: string) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
-  const lowConfidence = fields.filter((f) => f.confidence < 0.8).length;
+  const filled = fields.filter((f) => f.value.trim().length > 0);
+  const lowConfidence = filled.filter((f) => f.confidence < 0.8).length;
+  const missing = fields.length - filled.length;
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          {notice}
+        </div>
+      )}
       <div>
         <h2 className="text-lg font-semibold">Check the extracted values</h2>
         <p className="text-sm text-muted-foreground">
-          We read 42 fields.{" "}
+          We read {filled.length} of {fields.length} fields.{" "}
           {lowConfidence > 0
-            ? `${lowConfidence} look uncertain — they're flagged below. Correct anything that's off.`
-            : "Correct anything that looks off."}
+            ? `${lowConfidence} look uncertain — they're flagged below. `
+            : ""}
+          {missing > 0
+            ? `${missing} weren't found — fill any that apply. `
+            : ""}
+          Correct anything that looks off.
         </p>
       </div>
 
