@@ -7,6 +7,14 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-10 (Story/UX — landing rewritten to mirror the savings ladder)
+- **Marketing now matches the product.** The landing led with a flat feature grid that omitted the Reduce
+  (efficiency) and Earn (cashback) levers and never named the ladder. Rewrote it around the **five rungs —
+  Recover · Reduce · Reprice · Generate · Earn** — using the same language as the in-app Savings Stack
+  (`lib/savings-stack.ts`), with the hero badge/copy carrying the verbs and a **"See the savings stack" CTA
+  → `/app/savings`**. The 10 diagnosis categories now sit explicitly under "Recover, in depth". Kept the
+  three-click core loop + two-paths/CTA. The public story and the in-app story are now the same story.
+
 ### 2026-06-09 (Efficiency engine — the "Reduce" rung, now a live number)
 - **Built the genuinely-missing module** (spec module #2, Energy Efficiency Engine). Turns the Savings
   Stack's "Reduce — Unlock" placeholder into a quantified, real-data rung.
