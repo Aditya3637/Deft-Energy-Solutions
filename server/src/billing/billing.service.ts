@@ -1,13 +1,14 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service";
-import { PLANS, canSaveBill, planById, type Feature, type PlanId } from "./plans";
+import { PLANS, TRIAL_DAYS, canSaveBill, effectivePlanOf, planById, type Feature, type PlanId } from "./plans";
 import {
   activationFromWebhook,
   isLive,
   providerName,
   startCheckout,
   verifyRazorpaySignature,
+  webhookAction,
   type CheckoutResult,
 } from "./payments/provider";
 import { manualCheckout } from "./payments/provider-manual";
@@ -20,10 +21,16 @@ export type BillingStatus = {
   unit: string;
   custom: boolean;
   periodEnd: string | null;
+  trialing: boolean;
+  trialDaysLeft: number | null;
+  trialAvailable: boolean;
   usage: { buildings: number; savedBillsThisMonth: number };
   limits: { buildings: number; savedBillsPerMonth: number };
   features: Feature[];
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+type SubRow = { plan: string; status: string; startDate: Date; endDate: Date | null } | null;
 
 @Injectable()
 export class BillingService {
@@ -40,34 +47,56 @@ export class BillingService {
     return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), 1));
   }
 
-  /** The org's current plan id (latest active Subscription, default FREE). */
-  private async planId(orgId: string): Promise<PlanId> {
-    const sub = await this.prisma.withOrg(orgId, (tx) =>
-      tx.subscription.findFirst({ where: { status: "active" }, orderBy: { startDate: "desc" } }),
+  /** Latest subscription row that could still be in force (active or trialing). */
+  private latestSub(orgId: string): Promise<SubRow> {
+    return this.prisma.withOrg(orgId, (tx) =>
+      tx.subscription.findFirst({
+        where: { status: { in: ["active", "trialing"] } },
+        orderBy: { startDate: "desc" },
+        select: { plan: true, status: true, startDate: true, endDate: true },
+      }),
     );
-    return planById(sub?.plan ?? "FREE").id;
+  }
+
+  /** Effective plan id right now (expired trials / lapsed periods → FREE). */
+  private async planId(orgId: string): Promise<PlanId> {
+    return effectivePlanOf(await this.latestSub(orgId), new Date());
   }
 
   async status(orgId: string): Promise<BillingStatus> {
     const startOfMonth = this.startOfMonth();
-    const { sub, buildings, savedBillsThisMonth } = await this.prisma.withOrg(orgId, async (tx) => {
-      const [sub, buildings, savedBillsThisMonth] = await Promise.all([
-        tx.subscription.findFirst({ where: { status: "active" }, orderBy: { startDate: "desc" } }),
+    const { sub, buildings, savedBillsThisMonth, subCount } = await this.prisma.withOrg(orgId, async (tx) => {
+      const [sub, buildings, savedBillsThisMonth, subCount] = await Promise.all([
+        tx.subscription.findFirst({
+          where: { status: { in: ["active", "trialing"] } },
+          orderBy: { startDate: "desc" },
+          select: { plan: true, status: true, startDate: true, endDate: true },
+        }),
         tx.building.count(),
         tx.electricityBill.count({ where: { createdAt: { gte: startOfMonth } } }),
+        tx.subscription.count(),
       ]);
-      return { sub, buildings, savedBillsThisMonth };
+      return { sub, buildings, savedBillsThisMonth, subCount };
     });
 
-    const plan = planById(sub?.plan ?? "FREE");
+    const now = new Date();
+    const planId = effectivePlanOf(sub, now);
+    const plan = planById(planId);
+    const trialing = !!sub && sub.status === "trialing" && planId !== "FREE";
+    const trialDaysLeft =
+      trialing && sub?.endDate ? Math.max(0, Math.ceil((sub.endDate.getTime() - now.getTime()) / DAY_MS)) : null;
+
     return {
       plan: plan.id,
       planName: plan.name,
-      status: sub?.status ?? "active",
+      status: trialing ? "trialing" : "active",
       priceInr: plan.priceInr,
       unit: plan.unit,
       custom: plan.custom,
       periodEnd: sub?.endDate ? sub.endDate.toISOString() : null,
+      trialing,
+      trialDaysLeft,
+      trialAvailable: subCount === 0, // never subscribed/trialed before
       usage: { buildings, savedBillsThisMonth },
       limits: plan.limits,
       features: plan.features,
@@ -92,14 +121,29 @@ export class BillingService {
     }
   }
 
-  /** Begin an upgrade: a Razorpay payment link, or manual invoice instructions. */
+  /** Start a no-card 14-day Pro trial. One per org, ever. */
+  async startTrial(orgId: string): Promise<{ ok: true; plan: PlanId; endsAt: string }> {
+    const count = await this.prisma.withOrg(orgId, (tx) => tx.subscription.count());
+    if (count > 0) {
+      throw new HttpException("Trial already used on this workspace.", HttpStatus.CONFLICT);
+    }
+    const now = new Date();
+    const endDate = new Date(now.getTime() + TRIAL_DAYS * DAY_MS);
+    await this.prisma.withOrg(orgId, (tx) =>
+      tx.subscription.create({
+        data: { orgId, plan: "PRO", status: "trialing", startDate: now, endDate, billingCycle: "monthly", amountInr: 0 },
+      }),
+    );
+    return { ok: true, plan: "PRO", endsAt: endDate.toISOString() };
+  }
+
+  /** Begin an upgrade: a recurring Razorpay subscription, one-time link, or manual invoice. */
   async checkout(orgId: string, planIdInput: string): Promise<CheckoutResult> {
     const plan = planById(planIdInput);
     if (plan.id === "FREE") {
       throw new HttpException("The Free plan needs no checkout.", HttpStatus.BAD_REQUEST);
     }
-    // Enterprise is custom-priced → always the contact/invoice path.
-    if (plan.custom) return manualCheckout(plan.name, 0);
+    if (plan.custom) return manualCheckout(plan.name, 0); // Enterprise → contact/invoice
     return startCheckout(orgId, plan.id, plan.priceInr, process.env.APP_URL ?? "");
   }
 
@@ -114,11 +158,11 @@ export class BillingService {
     }
     const plan = planById(planIdInput);
     if (plan.id === "FREE") throw new HttpException("Cannot 'activate' the Free plan.", HttpStatus.BAD_REQUEST);
-    await this.activate(orgId, plan.id, plan.priceInr);
+    await this.activate(orgId, plan.id, plan.priceInr, this.periodEnd("manual"));
     return { ok: true, plan: plan.id };
   }
 
-  /** Verify + process a Razorpay webhook; activate the org's plan on payment. */
+  /** Verify + process a Razorpay webhook; activate / downgrade per the event. */
   async webhook(rawBody: string, signature: string): Promise<{ ok: boolean }> {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim() ?? "";
     if (!verifyRazorpaySignature(rawBody, signature, secret)) {
@@ -131,32 +175,57 @@ export class BillingService {
       throw new HttpException("Malformed webhook body.", HttpStatus.BAD_REQUEST);
     }
     const kind = String(event.event ?? "");
-    const paid = kind === "payment_link.paid" || kind === "payment.captured" || kind === "order.paid";
-    if (!paid) return { ok: true }; // ignore non-payment events
+    const action = webhookAction(kind);
+    if (action === "ignore") return { ok: true };
+
     const target = activationFromWebhook(event);
     if (!target) {
       this.log.warn(`Webhook ${kind} had no orgId/plan in notes — ignored`);
       return { ok: true };
     }
     const plan = planById(target.plan);
-    await this.activate(target.orgId, plan.id, plan.priceInr);
+
+    if (action === "downgrade") {
+      await this.cancel(target.orgId);
+      this.log.log(`Downgraded org ${target.orgId} to FREE via ${kind}`);
+      return { ok: true };
+    }
+    // activate_onetime → 30-day period; activate_recurring → open-ended (cancel webhook ends it).
+    await this.activate(target.orgId, plan.id, plan.priceInr, this.periodEnd(action === "activate_recurring" ? "recurring" : "onetime"));
     this.log.log(`Activated ${plan.id} for org ${target.orgId} via ${kind}`);
     return { ok: true };
   }
 
-  /** Upsert the active subscription: supersede the old one, create the new period. */
-  private async activate(orgId: string, plan: PlanId, amountInr: number): Promise<void> {
+  private periodEnd(kind: "recurring" | "onetime" | "manual"): Date | null {
+    // Recurring stays active until cancelled; one-time/manual lapse after a month.
+    return kind === "recurring" ? null : new Date(Date.now() + 30 * DAY_MS);
+  }
+
+  /** Supersede any in-force subscription and create the new active period. */
+  private async activate(orgId: string, plan: PlanId, amountInr: number, endDate: Date | null): Promise<void> {
     const now = new Date();
-    const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // monthly period
     await this.prisma.withOrg(orgId, async (tx) => {
-      await tx.subscription.updateMany({ where: { status: "active" }, data: { status: "cancelled", endDate: now } });
+      await tx.subscription.updateMany({
+        where: { status: { in: ["active", "trialing"] } },
+        data: { status: "cancelled", endDate: now },
+      });
       await tx.subscription.create({
         data: { orgId, plan, status: "active", startDate: now, endDate, billingCycle: "monthly", amountInr },
       });
     });
   }
 
-  /** Surfaced for the (future) admin view. */
+  /** Cancel any in-force subscription → effective plan falls back to FREE. */
+  private async cancel(orgId: string): Promise<void> {
+    const now = new Date();
+    await this.prisma.withOrg(orgId, (tx) =>
+      tx.subscription.updateMany({
+        where: { status: { in: ["active", "trialing"] } },
+        data: { status: "cancelled", endDate: now },
+      }),
+    );
+  }
+
   paymentMode() {
     return { provider: providerName(), live: isLive() };
   }

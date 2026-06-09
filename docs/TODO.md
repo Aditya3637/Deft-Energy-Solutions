@@ -96,9 +96,11 @@
 - [x] **Monetization (Plan tiers → entitlements → payment).** ✅ Plan catalog + pure entitlement gates
       (`server/src/billing/`, CI `billing-check.ts`); `GET /v1/billing(/plans)` with live usage; pricing
       page + Settings "Plan & billing" panel. ✅ **Enforcement** (402 over quota, signed-in only — free
-      funnel intact) + **payment seam** (manual default + Razorpay payment-links + signature-verified
-      webhook activation) + `UpgradeButton`. *To take real money:* set `PAYMENTS_PROVIDER=razorpay` + keys.
-      *Future:* recurring Razorpay Subscriptions API (today: link-per-period); per-seat proration.
+      funnel intact) + **payment seam** (manual default + Razorpay + signature-verified webhook activation)
+      + `UpgradeButton`. ✅ **No-card 14-day Pro trial** (`POST /v1/billing/trial`, effective-plan derived,
+      no cron) + **recurring auto-renewing Razorpay Subscriptions** (`RAZORPAY_PLAN_ID_PRO`; subscription.*
+      webhooks activate/downgrade; one-time link fallback). *To take real money:* `PAYMENTS_PROVIDER=razorpay`
+      + keys (+ `RAZORPAY_PLAN_ID_PRO` for auto-renew). *Future:* per-seat proration, dunning on failed charge.
 - [ ] Customer-angle test harness for payments + collections modules (persona + multi-DISCOM).
 - [ ] Migrate CI actions to Node 24 (deprecation warning on actions/* @v4 / node20).
 - [ ] Bill detail page: show the full 58-check diagnosis (findings + needs-data) per saved bill.

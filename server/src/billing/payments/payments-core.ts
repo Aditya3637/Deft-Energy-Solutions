@@ -19,6 +19,8 @@ export type CheckoutResult = {
   mode: "razorpay" | "manual";
   plan: string;
   amountInr: number;
+  /** true → an auto-renewing subscription; false/undefined → a one-time period. */
+  recurring?: boolean;
   redirectUrl?: string;
   reference?: string;
   instructions?: string;
@@ -40,6 +42,33 @@ export function providerName(): "razorpay" | "manual" {
 
 export function razorpayConfigured(): boolean {
   return !!process.env.RAZORPAY_KEY_ID?.trim() && !!process.env.RAZORPAY_KEY_SECRET?.trim();
+}
+
+export type WebhookAction = "activate_onetime" | "activate_recurring" | "downgrade" | "ignore";
+
+/** Map a Razorpay webhook event name to the action it should trigger. Pure. */
+export function webhookAction(event: string): WebhookAction {
+  switch (event) {
+    case "payment_link.paid":
+    case "order.paid":
+      return "activate_onetime";
+    case "subscription.activated":
+    case "subscription.charged":
+    case "subscription.resumed":
+      return "activate_recurring";
+    case "subscription.cancelled":
+    case "subscription.halted":
+    case "subscription.completed":
+    case "subscription.expired":
+      return "downgrade";
+    default:
+      return "ignore";
+  }
+}
+
+/** Razorpay recurring plan id for one of our tiers, e.g. RAZORPAY_PLAN_ID_PRO. "" = not configured. */
+export function razorpayPlanId(planId: string): string {
+  return process.env[`RAZORPAY_PLAN_ID_${planId}`]?.trim() ?? "";
 }
 
 /**

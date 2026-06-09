@@ -12,11 +12,17 @@ import {
   UNLIMITED,
   canAddBuilding,
   canSaveBill,
+  effectivePlanOf,
   hasFeature,
   nextPlan,
   planById,
 } from "../src/billing/plans";
-import { providerName as paymentProvider, verifyRazorpaySignature } from "../src/billing/payments/payments-core";
+import {
+  providerName as paymentProvider,
+  razorpayPlanId,
+  verifyRazorpaySignature,
+  webhookAction,
+} from "../src/billing/payments/payments-core";
 import { activationFromWebhook } from "../src/billing/payments/provider-razorpay";
 import { createHmac } from "node:crypto";
 
@@ -99,6 +105,46 @@ console.log("Plan & entitlement invariants:");
   const target = activationFromWebhook(JSON.parse(body));
   check(target?.orgId === "org-1" && target?.plan === "PRO", "activation target extracted from webhook notes");
   check(activationFromWebhook({ event: "x", payload: {} }) === null, "no notes → no activation (no false grant)");
+
+  // subscription events also carry notes
+  const subTarget = activationFromWebhook({
+    event: "subscription.charged",
+    payload: { subscription: { entity: { notes: { orgId: "org-2", plan: "PRO" } } } },
+  });
+  check(subTarget?.orgId === "org-2", "subscription webhook notes extracted too");
+}
+
+// ── Webhook event → action mapping ───────────────────────────────────────────────
+{
+  check(webhookAction("payment_link.paid") === "activate_onetime", "payment_link.paid → activate one-time");
+  check(webhookAction("subscription.charged") === "activate_recurring", "subscription.charged → activate recurring");
+  check(webhookAction("subscription.activated") === "activate_recurring", "subscription.activated → activate recurring");
+  check(webhookAction("subscription.cancelled") === "downgrade", "subscription.cancelled → downgrade");
+  check(webhookAction("subscription.halted") === "downgrade", "subscription.halted → downgrade");
+  check(webhookAction("payment.authorized") === "ignore", "unrelated event → ignore");
+}
+
+// ── Trial & recurring: effective-plan resolution (derived, no cron) ──────────────
+{
+  const now = new Date("2026-06-09T00:00:00Z");
+  const future = new Date("2026-06-20T00:00:00Z");
+  const past = new Date("2026-06-01T00:00:00Z");
+  check(effectivePlanOf(null, now) === "FREE", "no subscription → FREE");
+  check(effectivePlanOf({ plan: "PRO", status: "trialing", endDate: future }, now) === "PRO", "active trial → PRO");
+  check(effectivePlanOf({ plan: "PRO", status: "trialing", endDate: past }, now) === "FREE", "expired trial → FREE (no cron)");
+  check(effectivePlanOf({ plan: "PRO", status: "active", endDate: null }, now) === "PRO", "recurring (no endDate) → PRO");
+  check(effectivePlanOf({ plan: "PRO", status: "active", endDate: past }, now) === "FREE", "lapsed one-time period → FREE");
+  check(effectivePlanOf({ plan: "PRO", status: "cancelled", endDate: future }, now) === "FREE", "cancelled → FREE even if dated future");
+  check(effectivePlanOf({ plan: "ENTERPRISE", status: "active", endDate: null }, now) === "ENTERPRISE", "recurring Enterprise → ENTERPRISE");
+}
+
+// ── Recurring plan-id detection ──────────────────────────────────────────────────
+{
+  delete process.env.RAZORPAY_PLAN_ID_PRO;
+  check(razorpayPlanId("PRO") === "", "no Razorpay plan id → one-time fallback");
+  process.env.RAZORPAY_PLAN_ID_PRO = "plan_test123";
+  check(razorpayPlanId("PRO") === "plan_test123", "configured Razorpay plan id → recurring");
+  delete process.env.RAZORPAY_PLAN_ID_PRO;
 }
 
 if (failures > 0) {

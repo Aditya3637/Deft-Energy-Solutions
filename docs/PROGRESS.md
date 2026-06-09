@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Monetization #3 — 14-day Pro trial + recurring subscriptions)
+- **The conversion lever + auto-renewing revenue.** No schema change (notes-based mapping; trial/expiry
+  derived at read-time like payment status — no cron).
+- **No-card 14-day Pro trial:** `POST /v1/billing/trial` creates a `trialing` Pro subscription (one per
+  workspace, ever). `status()` now returns the **effective** plan — an expired trial or lapsed period
+  silently falls back to Free via the pure `effectivePlanOf(sub, now)`. Surfaced as a **"Trial · N days
+  left"** badge + a `TrialButton` in Settings (shown only when a trial is available).
+- **Recurring billing:** when `RAZORPAY_PLAN_ID_<PLAN>` is set, checkout creates an **auto-renewing Razorpay
+  Subscription** (org+plan in `notes`) instead of a one-time link. Webhook handling generalised via
+  `webhookAction(event)`: `subscription.activated/charged/resumed` → activate (open-ended, no endDate);
+  `subscription.cancelled/halted/completed/expired` → **downgrade to Free**; `payment_link.paid` → one-time
+  30-day period. Recurring vs one-time is chosen automatically on whether a plan id is configured.
+- **Frontend:** `billing.startTrial()` seam; panel CTA by state (trial-available → start trial; trialing →
+  "Subscribe to Pro"; free → upgrade; paid → manage).
+- **CI** `billing-check.ts` extended: `effectivePlanOf` (active/trial/expired/cancelled/recurring),
+  `webhookAction` mapping, recurring-plan-id detection, subscription-notes extraction.
+- **To enable recurring:** set `RAZORPAY_PLAN_ID_PRO` to a monthly Razorpay Plan. **Trial needs no config.**
+
 ### 2026-06-09 (Monetization #2 — enforcement + payment seam: the product can take money)
 - **The cash register works end-to-end.** Server-side enforcement + a real checkout, without breaking
   the anonymous free funnel.

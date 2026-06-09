@@ -22,7 +22,14 @@ export class BillingController {
     return this.svc.status(orgId);
   }
 
-  /** POST /v1/billing/checkout — begin an upgrade (payment link, or invoice). */
+  /** POST /v1/billing/trial — start a no-card 14-day Pro trial (one per workspace). */
+  @Post("trial")
+  startTrial(@CurrentOrg() orgId: string, @CurrentSession() session: SessionClaims | null) {
+    if (!session) throw new UnauthorizedException("Sign in to start a trial.");
+    return this.svc.startTrial(orgId);
+  }
+
+  /** POST /v1/billing/checkout — begin an upgrade (subscription, link, or invoice). */
   @Post("checkout")
   checkout(@CurrentOrg() orgId: string, @CurrentSession() session: SessionClaims | null, @Body("plan") plan: string) {
     if (!session) throw new UnauthorizedException("Sign in to upgrade.");

@@ -41,6 +41,17 @@ export const billing = {
 
   isSignedIn: () => isApiConfigured() && !!getSessionToken(),
 
+  /** Start a no-card 14-day Pro trial. Returns false if not signed in / already used / on error. */
+  async startTrial(): Promise<boolean> {
+    if (!isApiConfigured()) return false;
+    try {
+      await apiFetch("/v1/billing/trial", { method: "POST", ...NO_STORE });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   /** Begin an upgrade. Returns a payment link (razorpay) or invoice info (manual); null if not signed in. */
   async checkout(plan: M.PlanId): Promise<M.CheckoutResult | null> {
     if (!isApiConfigured()) return null;

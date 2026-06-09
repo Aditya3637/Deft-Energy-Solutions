@@ -116,6 +116,24 @@ function withinLimit(used: number, limit: number): boolean {
 
 export type Gate = { allowed: boolean; limit: number; reason?: string; upgradeTo?: PlanId };
 
+/**
+ * The plan an org is ACTUALLY entitled to right now, derived (never stored) from
+ * its latest subscription row + the clock — so an expired trial or a lapsed
+ * one-time period silently falls back to Free without a cron. A recurring
+ * subscription has no endDate and stays active until a cancel webhook flips it.
+ */
+export function effectivePlanOf(
+  sub: { plan: string; status: string; endDate: Date | null } | null,
+  now: Date,
+): PlanId {
+  if (!sub) return "FREE";
+  if (sub.status !== "active" && sub.status !== "trialing") return "FREE";
+  if (sub.endDate && sub.endDate.getTime() < now.getTime()) return "FREE"; // expired trial / lapsed period
+  return planById(sub.plan).id;
+}
+
+export const TRIAL_DAYS = 14;
+
 /** Can this org add another building? */
 export function canAddBuilding(id: string, currentCount: number): Gate {
   const plan = planById(id);

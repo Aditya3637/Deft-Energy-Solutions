@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UpgradeButton } from "@/components/app/upgrade-button";
+import { TrialButton } from "@/components/app/trial-button";
 import { api, UNLIMITED, type Feature, type PlanId } from "@/lib/api";
 import { formatIndianNumber } from "@/lib/format";
 
@@ -49,6 +50,10 @@ function UsageRow({ icon: Icon, label, used, limit }: { icon: typeof Building2; 
 export async function PlanBillingPanel() {
   const s = await api.billing.status();
   const priceLabel = s.custom ? "Custom" : s.priceInr === 0 ? "₹0" : `₹${formatIndianNumber(s.priceInr)}${s.unit}`;
+  const subtitle = s.trialing ? `Free during trial · ${priceLabel} after` : priceLabel;
+
+  // One primary CTA, by state: trialing → convert; free-with-trial → start trial;
+  // free-without-trial / paid → upgrade ladder; top tier → manage.
   const upgrade: { plan: PlanId; label: string } | null =
     s.plan === "FREE"
       ? { plan: "PRO", label: "Upgrade to Pro" }
@@ -66,16 +71,24 @@ export async function PlanBillingPanel() {
             </CardTitle>
             <CardDescription>Your current plan, usage and what each tier unlocks.</CardDescription>
           </div>
-          <Badge variant={s.status === "active" ? "success" : "warning"} className="capitalize">{s.status}</Badge>
+          {s.trialing ? (
+            <Badge variant="warning">Trial · {s.trialDaysLeft}d left</Badge>
+          ) : (
+            <Badge variant="success">Active</Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="text-2xl font-semibold">{s.planName}</div>
-            <div className="text-sm text-muted-foreground">{priceLabel}</div>
+            <div className="text-sm text-muted-foreground">{subtitle}</div>
           </div>
-          {upgrade ? (
+          {s.trialing ? (
+            <UpgradeButton plan="PRO" label="Subscribe to Pro" />
+          ) : s.plan === "FREE" && s.trialAvailable ? (
+            <TrialButton />
+          ) : upgrade ? (
             <UpgradeButton plan={upgrade.plan} label={upgrade.label} />
           ) : (
             <Button asChild variant="outline">
