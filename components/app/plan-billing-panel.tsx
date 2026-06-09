@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CreditCard, Building2, FileText, ArrowUpRight } from "lucide-react";
+import { CreditCard, Building2, FileText } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { api, UNLIMITED, type Feature } from "@/lib/api";
+import { UpgradeButton } from "@/components/app/upgrade-button";
+import { api, UNLIMITED, type Feature, type PlanId } from "@/lib/api";
 import { formatIndianNumber } from "@/lib/format";
 
 const FEATURE_LABEL: Record<Feature, string> = {
@@ -48,7 +49,12 @@ function UsageRow({ icon: Icon, label, used, limit }: { icon: typeof Building2; 
 export async function PlanBillingPanel() {
   const s = await api.billing.status();
   const priceLabel = s.custom ? "Custom" : s.priceInr === 0 ? "₹0" : `₹${formatIndianNumber(s.priceInr)}${s.unit}`;
-  const upgradeCta = s.plan === "FREE" ? "Upgrade to Pro" : s.plan === "PRO" ? "Compare plans" : "Manage plan";
+  const upgrade: { plan: PlanId; label: string } | null =
+    s.plan === "FREE"
+      ? { plan: "PRO", label: "Upgrade to Pro" }
+      : s.plan === "PRO"
+        ? { plan: "ENTERPRISE", label: "Go Enterprise" }
+        : null;
 
   return (
     <Card>
@@ -69,11 +75,13 @@ export async function PlanBillingPanel() {
             <div className="text-2xl font-semibold">{s.planName}</div>
             <div className="text-sm text-muted-foreground">{priceLabel}</div>
           </div>
-          <Button asChild variant={s.plan === "ENTERPRISE" ? "outline" : "default"}>
-            <Link href="/pricing">
-              {upgradeCta} <ArrowUpRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
+          {upgrade ? (
+            <UpgradeButton plan={upgrade.plan} label={upgrade.label} />
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/pricing">Manage plan</Link>
+            </Button>
+          )}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

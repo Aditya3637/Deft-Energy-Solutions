@@ -16,6 +16,9 @@ import {
   nextPlan,
   planById,
 } from "../src/billing/plans";
+import { providerName as paymentProvider, verifyRazorpaySignature } from "../src/billing/payments/payments-core";
+import { activationFromWebhook } from "../src/billing/payments/provider-razorpay";
+import { createHmac } from "node:crypto";
 
 let failures = 0;
 function check(cond: boolean, msg: string): void {
@@ -72,6 +75,30 @@ console.log("Plan & entitlement invariants:");
 {
   check(nextPlan("FREE") === "PRO" && nextPlan("PRO") === "ENTERPRISE", "upgrade ladder FREE→PRO→ENTERPRISE");
   check(nextPlan("ENTERPRISE") === null, "ENTERPRISE is the ceiling");
+}
+
+// ── Payment provider selection ───────────────────────────────────────────────────
+{
+  delete process.env.PAYMENTS_PROVIDER;
+  check(paymentProvider() === "manual", "payments default to manual (no account needed)");
+  process.env.PAYMENTS_PROVIDER = "razorpay";
+  check(paymentProvider() === "razorpay", "PAYMENTS_PROVIDER=razorpay selects the gateway");
+  delete process.env.PAYMENTS_PROVIDER;
+}
+
+// ── Webhook signature (the boundary that grants paid plans) ──────────────────────
+{
+  const secret = "whsec_test";
+  const body = JSON.stringify({ event: "payment_link.paid", payload: { payment_link: { entity: { notes: { orgId: "org-1", plan: "PRO" } } } } });
+  const goodSig = createHmac("sha256", secret).update(body, "utf8").digest("hex");
+  check(verifyRazorpaySignature(body, goodSig, secret), "valid webhook signature verifies");
+  check(!verifyRazorpaySignature(body, "deadbeef", secret), "tampered signature is rejected");
+  check(!verifyRazorpaySignature(body, goodSig, "wrong_secret"), "wrong secret is rejected");
+  check(!verifyRazorpaySignature("", goodSig, secret), "empty body is rejected");
+
+  const target = activationFromWebhook(JSON.parse(body));
+  check(target?.orgId === "org-1" && target?.plan === "PRO", "activation target extracted from webhook notes");
+  check(activationFromWebhook({ event: "x", payload: {} }) === null, "no notes → no activation (no false grant)");
 }
 
 if (failures > 0) {

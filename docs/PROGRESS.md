@@ -7,6 +7,26 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Monetization #2 — enforcement + payment seam: the product can take money)
+- **The cash register works end-to-end.** Server-side enforcement + a real checkout, without breaking
+  the anonymous free funnel.
+- **Enforcement:** `POST /v1/bills` now calls `assertCanSaveBill` for **signed-in orgs only** — over a
+  plan's monthly saved-bill quota returns **402 Payment Required** with `{reason, upgradeTo}`. Anonymous
+  (demo) requests are never gated, so value-before-signup is untouched. (Buildings have no live create
+  endpoint yet, so the meaningful write-gate is the bill save — the free→paid boundary.)
+- **Payment seam** `server/src/billing/payments/` (same pattern as OCR/BBPS/IEX): **manual** default
+  (invoice / sandbox self-activate) + **Razorpay** adapter — `POST /v1/billing/checkout` creates a hosted
+  **Payment Link** (org+plan stamped in notes) and returns its URL; `POST /v1/billing/webhook`
+  **signature-verifies** (HMAC-SHA256 over the raw body — `main.ts` now keeps `rawBody`) and **activates**
+  the org's `Subscription` on `payment_link.paid`. Self-activation (`POST /v1/billing/activate`) is allowed
+  **only in manual mode** — a live gateway grants paid plans by verified webhook only, never for free.
+- **Frontend:** `billing.checkout/activate` seam + an `UpgradeButton` (Razorpay → redirect to pay;
+  manual/sandbox → self-activate) wired into the Settings "Plan & billing" panel.
+- **CI** `billing-check.ts` extended: payment-provider selection + **webhook signature** (valid passes;
+  tampered / wrong-secret / empty rejected) + activation-target extraction (no notes → no grant).
+- **Env** documented (`PAYMENTS_PROVIDER`, `RAZORPAY_*`). No schema change (`Subscription` existed).
+  **To take real payments:** set `PAYMENTS_PROVIDER=razorpay` + keys + webhook secret.
+
 ### 2026-06-09 (Monetization #1 — Plans, entitlements & billing status)
 - **CEO call: built the cash register.** The product found savings but could not charge — now there's a
   single source of truth for plans + entitlements, enforced server-side (enforcement + payment seam land

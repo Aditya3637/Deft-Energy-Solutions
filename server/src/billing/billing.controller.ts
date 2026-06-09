@@ -1,7 +1,10 @@
-import { Controller, Get } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, Post, Req, UnauthorizedException } from "@nestjs/common";
 
-import { CurrentOrg } from "../common/current-org.decorator";
+import { CurrentOrg, CurrentSession } from "../common/current-org.decorator";
+import type { SessionClaims } from "../auth/jwt";
 import { BillingService } from "./billing.service";
+
+type RawReq = { rawBody?: Buffer; body?: unknown };
 
 @Controller("billing")
 export class BillingController {
@@ -17,5 +20,27 @@ export class BillingController {
   @Get()
   status(@CurrentOrg() orgId: string) {
     return this.svc.status(orgId);
+  }
+
+  /** POST /v1/billing/checkout — begin an upgrade (payment link, or invoice). */
+  @Post("checkout")
+  checkout(@CurrentOrg() orgId: string, @CurrentSession() session: SessionClaims | null, @Body("plan") plan: string) {
+    if (!session) throw new UnauthorizedException("Sign in to upgrade.");
+    return this.svc.checkout(orgId, plan);
+  }
+
+  /** POST /v1/billing/activate — self-activation (MANUAL provider only). */
+  @Post("activate")
+  activate(@CurrentOrg() orgId: string, @CurrentSession() session: SessionClaims | null, @Body("plan") plan: string) {
+    if (!session) throw new UnauthorizedException("Sign in to activate.");
+    return this.svc.activateManual(orgId, plan);
+  }
+
+  /** POST /v1/billing/webhook — payment gateway callback (signature-verified). */
+  @Post("webhook")
+  @HttpCode(200)
+  webhook(@Req() req: RawReq, @Headers("x-razorpay-signature") signature: string) {
+    const raw = req.rawBody ? req.rawBody.toString("utf8") : JSON.stringify(req.body ?? {});
+    return this.svc.webhook(raw, signature ?? "");
   }
 }

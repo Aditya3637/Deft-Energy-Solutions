@@ -82,6 +82,15 @@ export type BillingStatus = {
   features: Feature[];
 };
 
+export type CheckoutResult = {
+  mode: "razorpay" | "manual";
+  plan: string;
+  amountInr: number;
+  redirectUrl?: string;
+  reference?: string;
+  instructions?: string;
+};
+
 /** Demo default (anonymous / off-server): the Free plan. */
 export const DEFAULT_STATUS: BillingStatus = {
   plan: "FREE",
