@@ -47,13 +47,13 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <Brand />
           <p>© {new Date().getFullYear()} Deft Energy Solutions.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-foreground">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-foreground">
-              Terms
-            </Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
+            <Link href="/roi-calculator" className="hover:text-foreground">ROI calculator</Link>
+            <Link href="/developers" className="hover:text-foreground">Developers</Link>
+            <Link href="/status" className="hover:text-foreground">Status</Link>
+            <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link href="/terms" className="hover:text-foreground">Terms</Link>
           </div>
         </div>
       </footer>

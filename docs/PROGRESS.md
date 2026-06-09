@@ -5,19 +5,22 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · engine ✅ · B5 ✅ · B6 (markets & assets) ✅ DONE
+- **Active stage:** **Stage B (all screens B1–B7) ✅ COMPLETE** + hardened 58-check engine. No stubs left.
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B7 — ecosystem & growth (gamification, marketplace + reverse auction, training,
-  localisation, public pages: DPDP/ToS, ROI calculator, API docs, status). Then formalise the Stage D
-  mock-API seam. (OCR remains Stage G, clearly simulated.) Only `/app/settings` remains a stub.
+- **Next action:** Stage C/D — interaction polish pass (a11y/keyboard audit, scroll-restoration, route
+  transitions, i18n string catalogue) and formalise the **Stage D mock-API seam** (`lib/api/*`) so the
+  scattered `lib/mock/*` modules are read through typed client functions ready to swap for real endpoints
+  at Stage F. Then Stage E (backend). (OCR remains Stage G, clearly simulated.)
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
   `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
-  `/app/carbon` · `/app/markets` · `/app/assets` · `/app/settings` (stub)
+  `/app/carbon` · `/app/markets` · `/app/assets` · `/app/marketplace` · `/app/training` ·
+  `/app/leaderboard` · `/app/settings`
 - **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·
   `/field/collection`
-- **Other:** `/` · `/analyze` (B1) · `/styleguide` · `/login`
+- **Routes live (public):** `/` · `/analyze` · `/pricing` · `/roi-calculator` · `/developers` · `/status` ·
+  `/privacy` · `/terms` · `/login` · `/styleguide`
 
 ## Open questions / assumptions
 
@@ -35,6 +38,22 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage B7 — Stage B complete)
+- **Stage B7 complete — ecosystem & growth.** From `lib/mock/ecosystem.ts`:
+  - **Marketplace** (`/app/marketplace`) — vendor directory, RFQs, and a **reverse auction** ranking sealed
+    bids by total cost of ownership (best bid flagged).
+  - **Training** (`/app/training`) — course catalogue with progress bars, levels, completion KPIs.
+  - **Rewards** (`/app/leaderboard`) — G01 leaderboard (buildings ranked by EPI → points), G02 rewards
+    (points / tier / redeem), and earned/locked badges.
+  - **Settings** (`/app/settings`, replaces the last stub) — Organisation, **Language (ML01)** selector
+    (English + 6 regional), and Notification channel toggles.
+  - **Public pages** — `/pricing` (Free/Pro/Enterprise), `/privacy` (DPDP), `/terms`, `/status`,
+    `/developers` (API), `/roi-calculator` (public, reuses the ROI calculator). Footer now links them all,
+    fixing the earlier public dead-ends.
+  - Nav: Marketplace, Training, Rewards.
+- **Stage B (all screens) is done.** Every sidebar item and public link resolves to a real screen on mock
+  data; no stubs remain. Next: interaction-polish pass + the Stage D mock-API seam.
 
 ### 2026-06-09 (Stage B6)
 - **Stage B6 complete — energy markets & assets.** From `lib/mock/energy-markets.ts`:

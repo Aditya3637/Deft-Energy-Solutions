@@ -13,6 +13,9 @@ import {
   Leaf,
   ArrowLeftRight,
   BatteryCharging,
+  Store,
+  GraduationCap,
+  Trophy,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -41,6 +44,9 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: "Carbon", href: "/app/carbon", icon: Leaf },
   { label: "Markets", href: "/app/markets", icon: ArrowLeftRight },
   { label: "Assets", href: "/app/assets", icon: BatteryCharging },
+  { label: "Marketplace", href: "/app/marketplace", icon: Store },
+  { label: "Training", href: "/app/training", icon: GraduationCap },
+  { label: "Rewards", href: "/app/leaderboard", icon: Trophy },
   { label: "Settings", href: "/app/settings", icon: Settings },
 ];
 
