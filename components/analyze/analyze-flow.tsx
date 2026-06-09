@@ -18,10 +18,12 @@ import {
   Info,
   Zap,
   Search,
+  ListChecks,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
+import { tasks } from "@/lib/api/tasks";
 import { extract } from "@/lib/api/extract";
 import { billfetch, type Biller } from "@/lib/api/billfetch";
 import { corrections } from "@/lib/api/corrections";
@@ -617,8 +619,28 @@ function ResultStep({
   const diag = React.useMemo(() => fullDiagnose(fields), [fields]);
   const [showAll, setShowAll] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [taskAdded, setTaskAdded] = React.useState(false);
   const { toast } = useToast();
   const get = (key: string) => fields.find((f) => f.key === key)?.value ?? "";
+
+  // "Act on it" — turn the top recoverable finding into a real task.
+  const onAddTask = async () => {
+    const top = diag.top[0];
+    if (!top || taskAdded) return;
+    setTaskAdded(true);
+    const r = await tasks.create({
+      title: top.check.name,
+      building: get("consumerName") || get("discom") || "Portfolio",
+      savingsInr: top.annualINR,
+      priority: "HIGH",
+      source: "DIAGNOSIS",
+    });
+    toast(
+      r.created
+        ? { title: "Added to your tasks", description: "Find it under Tasks." }
+        : { title: "Added to your tasks", description: "Demo mode — connect a backend to persist it." },
+    );
+  };
 
   const onSave = async () => {
     setSaving(true);
@@ -682,9 +704,20 @@ function ResultStep({
               <span className="text-2xl font-semibold text-primary">
                 {formatRupeesCompact(diag.top[0].annualINR ?? 0)}/yr
               </span>
-              <Button asChild>
-                <Link href="/app">
-                  See it in your dashboard <ArrowRight className="h-4 w-4" />
+              <Button onClick={onAddTask} disabled={taskAdded}>
+                {taskAdded ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" /> Added to tasks
+                  </>
+                ) : (
+                  <>
+                    <ListChecks className="h-4 w-4" /> Add to my tasks
+                  </>
+                )}
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/app/tasks">
+                  View tasks <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

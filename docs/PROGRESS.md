@@ -7,6 +7,14 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Core loop — "act on it": create a task from a diagnosis finding)
+- **The result screen's top recommended action is now actionable.** "Add to my tasks" on the biggest
+  recoverable finding creates a real task (title = the fix, building = consumer, savings = the ₹ found,
+  priority HIGH, source DIAGNOSIS) — closing the loop's last step: *find savings → act on it.*
+- **Backend:** `POST /v1/tasks` (create) + `CreateTaskDto` + `TasksService.create` (RLS-scoped; defaults
+  building/assignee/status, due = +14 days). **Frontend:** `tasks.create()` seam (POST when configured,
+  demo no-op otherwise) + button on `ResultStep` with optimistic "Added to tasks" + a "View tasks" link.
+
 ### 2026-06-09 (REFOCUS — back to the core savings loop; close the loop on /app/bills)
 - **Course-correction.** The last ~4 turns (payments → collection-agent → BBPS licence → connector) drifted
   into **Module L (collection)** — peripheral + premature (needs licences/banks). Per the North Star and
