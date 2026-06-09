@@ -7,6 +7,23 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Breadth #7 — Compliance wired to live data)
+- **Compliance is now derived from the org's real data**, not a fixture. New `server/src/compliance/`:
+  `GET /v1/compliance` (RLS-scoped) reads the org's bills, buildings and GHG inventory and computes the
+  **scorecard** (5 obligations: PF compliance, electricity-dues currency, GHG inventory, BRSR filing
+  readiness, bill-capture coverage), **BRSR Principle 6 (Environment) %**, and the **ESG Environment
+  pillar**. Social/governance stay nominal — the platform has no signal for them, so we don't fabricate.
+- **No-false-positive discipline** (same as the diagnosis engine): an obligation reads "compliant" only
+  when the data supports it, and "upcoming" (not compliant) when the data isn't there to assess — a levied
+  PF penalty or an unpaid past-due bill can never read as compliant. Pure compute lives in
+  `compliance.compute.ts` so it's testable without a DB.
+- **Frontend seam** `lib/api/sustainability.ts` live-fetches once per render (React `cache` dedupes the
+  obligations/brsr/esg calls); falls back to the deterministic fixture off-server. Feeds **both**
+  `/compliance` and `/executive`.
+- **Customer-angle test:** `scripts/compliance-check.ts` (CI) runs 5 org personas across
+  MSEDCL/BESCOM/TANGEDCO/TPDDL/UPPCL — clean / PF-penalised / overdue / brand-new / partial-data —
+  asserting correct statuses, no false positives, and finite-integral-bounded ESG/BRSR values.
+
 ### 2026-06-09 (Stage H — DPDP self-service: access / correct / erase / consent)
 - **Data-principal rights now self-serve** (DPDP Act 2023). New `server/src/account/` (auth-required, acts
   only on the caller's own org): `GET /v1/account` (profile + consent), `GET /v1/account/export` (full

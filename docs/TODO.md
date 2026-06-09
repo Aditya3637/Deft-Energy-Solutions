@@ -46,8 +46,11 @@
    (unit/integration/E2E/contract/perf/security/a11y), VAPT, error monitoring + structured logging.
 6. **Remaining integrations (Stage G):** IEX/PXIL prices, smart-meter/AMI, BMS/IoT, WhatsApp/SMS,
    DISCOM tariff scraping.
-7. **Module breadth → live:** capex / compliance / carbon / markets / assets / marketplace / training are
-   still mock; wire to real backend domain-by-domain.
+7. **Module breadth → live:** wire mock breadth modules to the real backend domain-by-domain.
+   - ✅ **Compliance** — `GET /v1/compliance` derives the scorecard / BRSR Principle-6 / ESG-Environment
+     from the org's real bills, buildings and GHG inventory (no-false-positive discipline; CI invariant
+     `compliance-check.ts` over 5 multi-DISCOM personas). Feeds both `/compliance` and `/executive`.
+   - Still mock: capex / carbon / markets / assets / marketplace / training.
 
 ---
 

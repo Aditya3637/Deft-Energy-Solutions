@@ -43,6 +43,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/auth-check.ts
       - name: Multi-DISCOM persona test (diagnosis)
         run: npx ts-node --transpile-only scripts/persona-discom-check.ts
+      - name: Compliance scorecard invariants
+        run: npx ts-node --transpile-only scripts/compliance-check.ts
 
   docker:
     runs-on: ubuntu-latest
