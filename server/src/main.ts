@@ -15,7 +15,21 @@ async function bootstrap() {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  app.enableCors({ origin: origins.length ? origins : true });
+  // Allow the configured origins plus any *.vercel.app (incl. preview deploys).
+  app.enableCors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // same-origin / server-to-server / curl
+      try {
+        const host = new URL(origin).hostname;
+        if (origins.includes(origin) || host.endsWith(".vercel.app")) {
+          return cb(null, true);
+        }
+      } catch {
+        /* malformed origin → deny */
+      }
+      return cb(null, false);
+    },
+  });
 
   const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port, "0.0.0.0");

@@ -26,4 +26,4 @@ services:
       - key: PORT
         value: "4000"
       - key: CORS_ORIGINS
-        value: "https://aditya3637.github.io,http://localhost:3000"
+        value: "https://aditya3637.github.io,https://deft-energy-solutions.vercel.app,http://localhost:3000"
