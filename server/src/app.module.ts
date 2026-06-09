@@ -13,6 +13,7 @@ import { ExtractModule } from "./extract/extract.module";
 import { BillFetchModule } from "./billfetch/billfetch.module";
 import { CorrectionsModule } from "./corrections/corrections.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { CollectionsModule } from "./collections/collections.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PaymentsModule } from "./payments/payments.module";
     BillFetchModule,
     CorrectionsModule,
     PaymentsModule,
+    CollectionsModule,
   ],
   controllers: [HealthController],
 })

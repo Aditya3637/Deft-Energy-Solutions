@@ -30,7 +30,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'User','Subscription','Building','ElectricityBill','Task','AlertRule',
     'AlertInstance','Document','ActivityLog','CapexRequest','GhgInventory',
-    'ExtractionFeedback'
+    'ExtractionFeedback','DiscomLicense','Collection','Remittance'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);

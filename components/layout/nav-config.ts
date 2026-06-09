@@ -37,6 +37,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: "Executive", href: "/app/executive", icon: Presentation },
   { label: "Bills", href: "/app/bills", icon: FileText },
   { label: "Payments", href: "/app/payments", icon: CalendarClock },
+  { label: "Collections", href: "/app/collections", icon: Wallet },
   { label: "Buildings", href: "/app/buildings", icon: Building2 },
   { label: "Tasks", href: "/app/tasks", icon: ListChecks },
   { label: "Alerts", href: "/app/alerts", icon: Bell },

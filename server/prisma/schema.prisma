@@ -107,6 +107,9 @@ model Organisation {
   capexRequests CapexRequest[]
   ghgInventory  GhgInventory[]
   extractionFeedback ExtractionFeedback[]
+  discomLicenses DiscomLicense[]
+  collections    Collection[]
+  remittances    Remittance[]
 }
 
 model User {
@@ -445,4 +448,124 @@ model ExtractionFeedback {
   @@index([orgId])
   @@index([discom])
   @@index([createdAt])
+}
+
+// ------------------------------------------------ collection agent (money)
+// All monetary values are integer PAISE (BigInt) — never floats. Status is an
+// explicit state machine; commission is computed at confirm time from the
+// license's model. See server/src/collections/.
+
+enum CollectionMode {
+  BBPS // via a BBPOU / Agent-Institution aggregator (per-txn commission, T+1 NPCI settlement)
+  DIRECT // a DISCOM's own agency portal/API (%-commission, deposit/float, daily reconciliation)
+  MANUAL // offline cash recorded by a field agent
+}
+
+enum CommissionType {
+  PER_TXN // flat paise per transaction (typical BBPS)
+  PERCENT // basis points of the amount collected
+  PERCENT_SPLIT // separate bps for current vs outstanding/arrears (MSEDCL-style)
+}
+
+enum LicenseStatus {
+  SANDBOX
+  ACTIVE
+  SUSPENDED
+}
+
+enum CollectionMethod {
+  CASH
+  UPI
+  CARD
+  NETBANKING
+  BBPS
+}
+
+enum CollectionStatus {
+  INITIATED // recorded, money not yet confirmed in hand
+  CONFIRMED // consumer payment received by the agent
+  REMITTED // settled to the DISCOM in a remittance batch
+  RECONCILED // matched against the DISCOM settlement report
+  FAILED
+  REFUNDED
+}
+
+enum RemittanceStatus {
+  PENDING
+  SETTLED
+  RECONCILED
+}
+
+model DiscomLicense {
+  id                       String          @id @default(uuid())
+  orgId                    String
+  discom                   String
+  billerId                 String          @default("") // BBPS biller id (mode=BBPS)
+  mode                     CollectionMode
+  aggregator               String          @default("") // billavenue/setu (BBPS) or DISCOM portal (DIRECT)
+  status                   LicenseStatus   @default(SANDBOX)
+  commissionType           CommissionType
+  commissionPerTxnPaise    BigInt          @default(0)
+  commissionRateBps        Int             @default(0) // PERCENT
+  commissionCurrentBps     Int             @default(0) // PERCENT_SPLIT (current)
+  commissionOutstandingBps Int             @default(0) // PERCENT_SPLIT (arrears)
+  commissionCapPaise       BigInt          @default(0) // 0 = no cap
+  commissionMinPaise       BigInt          @default(0)
+  settlementCycle          String          @default("T+1")
+  floatPaise               BigInt          @default(0) // working-capital balance
+  createdAt                DateTime        @default(now())
+
+  org         Organisation @relation(fields: [orgId], references: [id])
+  collections Collection[]
+  remittances Remittance[]
+
+  @@index([orgId])
+}
+
+model Collection {
+  id              String           @id @default(uuid())
+  orgId           String
+  licenseId       String
+  billId          String? // links to the ElectricityBill obligation (payments layer)
+  consumerNumber  String           @default("")
+  amountPaise     BigInt
+  isOutstanding   Boolean          @default(false) // arrears recovery → split-commission rate
+  method          CollectionMethod
+  status          CollectionStatus @default(INITIATED)
+  idempotencyKey  String
+  providerRef     String           @default("") // connector/txn ref (no double-collect)
+  commissionPaise BigInt           @default(0)
+  collectedAt     DateTime         @default(now())
+  remittanceId    String?
+  createdAt       DateTime         @default(now())
+
+  org        Organisation  @relation(fields: [orgId], references: [id])
+  license    DiscomLicense @relation(fields: [licenseId], references: [id])
+  remittance Remittance?   @relation(fields: [remittanceId], references: [id])
+
+  @@unique([orgId, idempotencyKey])
+  @@index([orgId])
+  @@index([licenseId])
+  @@index([status])
+}
+
+model Remittance {
+  id              String           @id @default(uuid())
+  orgId           String
+  licenseId       String
+  periodDate      DateTime
+  grossPaise      BigInt           @default(0) // total collected from consumers
+  remittedPaise   BigInt           @default(0) // settled to the DISCOM
+  commissionPaise BigInt           @default(0) // our earnings back
+  count           Int              @default(0)
+  status          RemittanceStatus @default(PENDING)
+  reconciledAt    DateTime?
+  createdAt       DateTime         @default(now())
+
+  org         Organisation  @relation(fields: [orgId], references: [id])
+  license     DiscomLicense @relation(fields: [licenseId], references: [id])
+  collections Collection[]
+
+  @@index([orgId])
+  @@index([licenseId])
 }

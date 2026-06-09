@@ -5,7 +5,24 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅
+- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
+
+### 2026-06-09 (Collection-agent backend — money-safe, multi-DISCOM)
+- **Researched** how DISCOM collection agents work (BBPS Agent-Institution per-txn + T+1 NPCI;
+  MSEDCL %-split current/arrears; UPPCL direct onboarding; BESCOM/TANGEDCO via BBPS) → `docs/COLLECTION-AGENT.md`.
+- **Model (`server/src/collections/` + 3 tables):** `DiscomLicense` (mode BBPS/DIRECT/MANUAL, configurable
+  commission PER_TXN / PERCENT / PERCENT_SPLIT with cap/min, settlement cycle, float), `Collection`
+  (idempotent via unique `(orgId, idempotencyKey)`, explicit state machine, links to the bill it settles),
+  `Remittance` (gross → remitted → commission batch). **All money is integer paise (BigInt) — no floats.**
+- **Flow:** worklist (unpaid/overdue bills, matched to a license) → record collection (computes commission,
+  marks the bill paid on the payments layer) → remit batch to the DISCOM (commission accrues to float).
+- **Money-safety locked in CI:** `scripts/collections-check.ts` asserts commission invariants (percent,
+  per-txn clamp, cap, current/arrears split, floor-never-round-up, ≤ amount). Runs in Server CI.
+- **Connector seam** (`connector.ts`): `mock` today; real BBPS aggregator / DISCOM API plugs in behind
+  `COLLECTIONS_LIVE`. **Honest:** code is the system-of-record; real money needs the license + sponsor bank
+  + KYC (documented). Licenses seeded SANDBOX/ACTIVE for 4 DISCOMs + sample collections + one remittance.
+- **Frontend `/app/collections`:** collected / commission / pending-remit / float StatCards, per-DISCOM
+  license cards, and a client **collection worklist** (Collect → settles the bill). Sandbox banner. Nav entry.
 
 ### 2026-06-09 (Payments & due-date tracking — multi-asset)
 - **New `/app/payments` view: every asset's bills, due dates and payment status in one place.**

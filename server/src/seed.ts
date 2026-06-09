@@ -5,7 +5,9 @@
  * rows from earlier deploys, and ensures one sample bill. Compiled to
  * dist/seed.js and run on container boot.
  */
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+import { commissionPaise, rupeesToPaise, type CommissionModel } from "./collections/money";
 
 const prisma = new PrismaClient();
 const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000001";
@@ -200,8 +202,63 @@ async function main() {
       }
     }
 
+    // Collection-agent licenses (4 DISCOMs, mixed models — see docs/COLLECTION-AGENT.md).
+    // Commission config in basis points / flat paise; floats start at 0 (SANDBOX/ACTIVE demo).
+    const LICENSES: Prisma.DiscomLicenseUncheckedCreateInput[] = [
+      { id: "lic-msedcl", orgId: DEMO_ORG_ID, discom: "MSEDCL", mode: "DIRECT", aggregator: "mahadiscom-portal", status: "ACTIVE", commissionType: "PERCENT_SPLIT", commissionCurrentBps: 500, commissionOutstandingBps: 1000, settlementCycle: "DAILY" },
+      { id: "lic-uppcl", orgId: DEMO_ORG_ID, discom: "UPPCL", mode: "DIRECT", aggregator: "upcscbls", status: "ACTIVE", commissionType: "PERCENT", commissionRateBps: 60, commissionCapPaise: 2000n, settlementCycle: "DAILY" },
+      { id: "lic-bescom", orgId: DEMO_ORG_ID, discom: "BESCOM", mode: "BBPS", aggregator: "billavenue", status: "SANDBOX", commissionType: "PER_TXN", commissionPerTxnPaise: 1000n, billerId: "BESC00000KAR01", settlementCycle: "T+1" },
+      { id: "lic-tangedco", orgId: DEMO_ORG_ID, discom: "TANGEDCO", mode: "BBPS", aggregator: "setu", status: "SANDBOX", commissionType: "PER_TXN", commissionPerTxnPaise: 800n, billerId: "TNEB00000TN01", settlementCycle: "T+1" },
+    ];
+    for (const l of LICENSES) {
+      await tx.discomLicense.upsert({ where: { id: l.id as string }, update: l, create: l });
+    }
+
+    // Sample collections (deterministic) + one settled remittance, so the
+    // collections dashboard shows collected / remitted / commission / float.
+    const msedclModel: CommissionModel = {
+      type: "PERCENT_SPLIT", perTxnPaise: 0, rateBps: 0, currentBps: 500, outstandingBps: 1000, capPaise: 0, minPaise: 0,
+    };
+    const uppclModel: CommissionModel = {
+      type: "PERCENT", perTxnPaise: 0, rateBps: 60, currentBps: 0, outstandingBps: 0, capPaise: 2000, minPaise: 0,
+    };
+    const comm = (m: CommissionModel, rupees: number, outstanding = false) =>
+      commissionPaise(m, rupeesToPaise(rupees), outstanding);
+
+    // Remittance FIRST (col-1 references it via FK). Settles col-1 to MSEDCL;
+    // its commission accrues to the license float.
+    const remGross = BigInt(rupeesToPaise(480000));
+    const remComm = BigInt(comm(msedclModel, 480000, false));
+    await tx.remittance.upsert({
+      where: { id: "rem-1" },
+      update: { orgId: DEMO_ORG_ID, licenseId: "lic-msedcl", periodDate: addDays(today, -2), grossPaise: remGross, remittedPaise: remGross, commissionPaise: remComm, count: 1, status: "SETTLED" },
+      create: { id: "rem-1", orgId: DEMO_ORG_ID, licenseId: "lic-msedcl", periodDate: addDays(today, -2), grossPaise: remGross, remittedPaise: remGross, commissionPaise: remComm, count: 1, status: "SETTLED" },
+    });
+    await tx.discomLicense.update({ where: { id: "lic-msedcl" }, data: { floatPaise: remComm } });
+
+    const COLLECTIONS: {
+      id: string; licenseId: string; model: CommissionModel; amountInr: number;
+      isOutstanding: boolean; method: Prisma.CollectionUncheckedCreateInput["method"];
+      status: Prisma.CollectionUncheckedCreateInput["status"]; remittanceId: string | null;
+    }[] = [
+      { id: "col-1", licenseId: "lic-msedcl", model: msedclModel, amountInr: 480000, isOutstanding: false, method: "UPI", status: "REMITTED", remittanceId: "rem-1" },
+      { id: "col-2", licenseId: "lic-msedcl", model: msedclModel, amountInr: 210000, isOutstanding: false, method: "CASH", status: "CONFIRMED", remittanceId: null },
+      { id: "col-3", licenseId: "lic-msedcl", model: msedclModel, amountInr: 95000, isOutstanding: true, method: "CASH", status: "CONFIRMED", remittanceId: null },
+      { id: "col-4", licenseId: "lic-uppcl", model: uppclModel, amountInr: 150000, isOutstanding: false, method: "UPI", status: "CONFIRMED", remittanceId: null },
+    ];
+    for (const c of COLLECTIONS) {
+      const data: Prisma.CollectionUncheckedCreateInput = {
+        id: c.id, orgId: DEMO_ORG_ID, licenseId: c.licenseId, consumerNumber: "",
+        amountPaise: BigInt(rupeesToPaise(c.amountInr)), isOutstanding: c.isOutstanding,
+        method: c.method, status: c.status, idempotencyKey: c.id,
+        commissionPaise: BigInt(comm(c.model, c.amountInr, c.isOutstanding)),
+        remittanceId: c.remittanceId,
+      };
+      await tx.collection.upsert({ where: { id: c.id }, update: data, create: data });
+    }
+
     // eslint-disable-next-line no-console
-    console.log(`Seed: ${BUILDINGS.length} buildings, ${payCount} tracked bills, ${legacy.length} legacy pruned.`);
+    console.log(`Seed: ${BUILDINGS.length} buildings, ${payCount} tracked bills, ${LICENSES.length} licenses, ${legacy.length} legacy pruned.`);
   });
 }
 

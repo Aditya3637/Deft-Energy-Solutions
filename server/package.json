@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:rls": "prisma db execute --file prisma/rls.sql --schema prisma/schema.prisma",
     "diagnosis:check": "ts-node --transpile-only scripts/diagnosis-check.ts",
+    "collections:check": "ts-node --transpile-only scripts/collections-check.ts",
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {

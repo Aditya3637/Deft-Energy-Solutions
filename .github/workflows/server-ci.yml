@@ -37,6 +37,8 @@ jobs:
         run: npm run build
       - name: Diagnosis engine invariants
         run: npx ts-node --transpile-only scripts/diagnosis-check.ts
+      - name: Commission money invariants
+        run: npx ts-node --transpile-only scripts/collections-check.ts
 
   docker:
     runs-on: ubuntu-latest
