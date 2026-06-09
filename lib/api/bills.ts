@@ -1,5 +1,5 @@
 import * as M from "@/lib/mock/bill";
-import { apiFetch, isApiConfigured, liveServer, NO_STORE } from "@/lib/api/client";
+import { ApiError, apiFetch, isApiConfigured, liveServer, NO_STORE } from "@/lib/api/client";
 
 export type { ExtractedField, FieldGroup } from "@/lib/mock/bill";
 export const GROUP_ORDER = M.GROUP_ORDER;
@@ -60,7 +60,9 @@ function fieldsToBillPayload(fields: M.ExtractedField[]): Record<string, string 
   return out;
 }
 
-export type SaveResult = { saved: boolean; bill?: unknown };
+/** When a signed-in org is over its plan quota the server returns 402. */
+export type PlanLimit = { reason?: string; upgradeTo?: "PRO" | "ENTERPRISE" };
+export type SaveResult = { saved: boolean; bill?: unknown; limitReached?: boolean; limit?: PlanLimit };
 
 export const bills = {
   /** The sample bill returned by the preview "extraction" (Stage G: real OCR). */
@@ -72,11 +74,20 @@ export const bills = {
    */
   async create(fields: M.ExtractedField[]): Promise<SaveResult> {
     if (!isApiConfigured()) return { saved: false };
-    const bill = await apiFetch<unknown>("/v1/bills", {
-      method: "POST",
-      body: JSON.stringify(fieldsToBillPayload(fields)),
-    });
-    return { saved: true, bill };
+    try {
+      const bill = await apiFetch<unknown>("/v1/bills", {
+        method: "POST",
+        body: JSON.stringify(fieldsToBillPayload(fields)),
+      });
+      return { saved: true, bill };
+    } catch (e) {
+      // 402 = plan quota reached → surface the upgrade path instead of a dead-end.
+      if (e instanceof ApiError && e.status === 402) {
+        const b = (e.body ?? {}) as { reason?: string; upgradeTo?: "PRO" | "ENTERPRISE" };
+        return { saved: false, limitReached: true, limit: { reason: b.reason, upgradeTo: b.upgradeTo } };
+      }
+      throw e;
+    }
   },
 
   /**

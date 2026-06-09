@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
+import { GROUP_ORDER, bills, type ExtractedField, type PlanLimit } from "@/lib/api/bills";
+import { UpgradePrompt } from "@/components/app/upgrade-prompt";
 import { tasks } from "@/lib/api/tasks";
 import { extract } from "@/lib/api/extract";
 import { billfetch, type Biller } from "@/lib/api/billfetch";
@@ -620,6 +621,7 @@ function ResultStep({
   const [showAll, setShowAll] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [taskAdded, setTaskAdded] = React.useState(false);
+  const [limit, setLimit] = React.useState<PlanLimit | null>(null);
   const { toast } = useToast();
   const get = (key: string) => fields.find((f) => f.key === key)?.value ?? "";
 
@@ -646,11 +648,17 @@ function ResultStep({
     setSaving(true);
     try {
       const r = await bills.create(fields);
-      toast(
-        r.saved
-          ? { title: "Saved to your workspace", description: "Stored and diagnosed on the server." }
-          : { title: "Saved to your workspace", description: "Demo mode — connect a backend to persist it." },
-      );
+      if (r.limitReached) {
+        setLimit(r.limit ?? {});
+        toast({ title: "Plan limit reached", description: r.limit?.reason ?? "Upgrade to save more bills." });
+      } else {
+        setLimit(null);
+        toast(
+          r.saved
+            ? { title: "Saved to your workspace", description: "Stored and diagnosed on the server." }
+            : { title: "Saved to your workspace", description: "Demo mode — connect a backend to persist it." },
+        );
+      }
     } catch {
       toast({ title: "Couldn't save", description: "The backend isn't reachable right now." });
     } finally {
@@ -875,6 +883,8 @@ function ResultStep({
       </div>
 
       <Separator />
+
+      {limit && <UpgradePrompt limit={limit} onDismiss={() => setLimit(null)} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" onClick={onBack}>

@@ -100,7 +100,10 @@
       + `UpgradeButton`. ✅ **No-card 14-day Pro trial** (`POST /v1/billing/trial`, effective-plan derived,
       no cron) + **recurring auto-renewing Razorpay Subscriptions** (`RAZORPAY_PLAN_ID_PRO`; subscription.*
       webhooks activate/downgrade; one-time link fallback). *To take real money:* `PAYMENTS_PROVIDER=razorpay`
-      + keys (+ `RAZORPAY_PLAN_ID_PRO` for auto-renew). *Future:* per-seat proration, dunning on failed charge.
+      + keys (+ `RAZORPAY_PLAN_ID_PRO` for auto-renew). ✅ **Dunning** (`subscription.pending` → 7-day
+      `past_due` grace, then auto-downgrade; red banner) + **402 → in-app upgrade prompt** (`ApiError` →
+      `bills.create` surfaces the limit → `UpgradePrompt` in the analyze flow). *Future:* per-seat proration,
+      dunning email/WhatsApp nudges during grace.
 - [ ] Customer-angle test harness for payments + collections modules (persona + multi-DISCOM).
 - [ ] Migrate CI actions to Node 24 (deprecation warning on actions/* @v4 / node20).
 - [ ] Bill detail page: show the full 58-check diagnosis (findings + needs-data) per saved bill.

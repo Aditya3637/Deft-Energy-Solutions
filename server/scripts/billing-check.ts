@@ -120,7 +120,8 @@ console.log("Plan & entitlement invariants:");
   check(webhookAction("subscription.charged") === "activate_recurring", "subscription.charged → activate recurring");
   check(webhookAction("subscription.activated") === "activate_recurring", "subscription.activated → activate recurring");
   check(webhookAction("subscription.cancelled") === "downgrade", "subscription.cancelled → downgrade");
-  check(webhookAction("subscription.halted") === "downgrade", "subscription.halted → downgrade");
+  check(webhookAction("subscription.halted") === "downgrade", "subscription.halted (retries exhausted) → downgrade");
+  check(webhookAction("subscription.pending") === "mark_past_due", "subscription.pending (charge failed) → dunning grace");
   check(webhookAction("payment.authorized") === "ignore", "unrelated event → ignore");
 }
 
@@ -136,6 +137,9 @@ console.log("Plan & entitlement invariants:");
   check(effectivePlanOf({ plan: "PRO", status: "active", endDate: past }, now) === "FREE", "lapsed one-time period → FREE");
   check(effectivePlanOf({ plan: "PRO", status: "cancelled", endDate: future }, now) === "FREE", "cancelled → FREE even if dated future");
   check(effectivePlanOf({ plan: "ENTERPRISE", status: "active", endDate: null }, now) === "ENTERPRISE", "recurring Enterprise → ENTERPRISE");
+  // Dunning: a failed charge keeps Pro during the grace window, then drops.
+  check(effectivePlanOf({ plan: "PRO", status: "past_due", endDate: future }, now) === "PRO", "past_due within grace → still PRO");
+  check(effectivePlanOf({ plan: "PRO", status: "past_due", endDate: past }, now) === "FREE", "past_due after grace → FREE (no cron)");
 }
 
 // ── Recurring plan-id detection ──────────────────────────────────────────────────

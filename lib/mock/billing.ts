@@ -80,6 +80,8 @@ export type BillingStatus = {
   trialing: boolean;
   trialDaysLeft: number | null;
   trialAvailable: boolean;
+  pastDue: boolean;
+  graceDaysLeft: number | null;
   usage: { buildings: number; savedBillsThisMonth: number };
   limits: { buildings: number; savedBillsPerMonth: number };
   features: Feature[];
@@ -106,6 +108,8 @@ export const DEFAULT_STATUS: BillingStatus = {
   trialing: false,
   trialDaysLeft: null,
   trialAvailable: true,
+  pastDue: false,
+  graceDaysLeft: null,
   usage: { buildings: 1, savedBillsThisMonth: 1 },
   limits: { buildings: 1, savedBillsPerMonth: 3 },
   features: [],

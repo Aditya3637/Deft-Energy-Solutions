@@ -73,12 +73,24 @@ export async function PlanBillingPanel() {
           </div>
           {s.trialing ? (
             <Badge variant="warning">Trial · {s.trialDaysLeft}d left</Badge>
+          ) : s.pastDue ? (
+            <Badge variant="destructive">Payment failed</Badge>
           ) : (
             <Badge variant="success">Active</Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        {s.pastDue && (
+          <div className="flex flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-destructive">
+              Your last payment failed. Pro stays active for{" "}
+              <span className="font-semibold">{s.graceDaysLeft} more day{s.graceDaysLeft === 1 ? "" : "s"}</span> —
+              update your payment method to avoid losing access.
+            </span>
+            <UpgradeButton plan="PRO" label="Update payment" variant="outline" />
+          </div>
+        )}
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="text-2xl font-semibold">{s.planName}</div>

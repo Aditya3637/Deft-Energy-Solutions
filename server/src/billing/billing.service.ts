@@ -1,7 +1,16 @@
 import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service";
-import { PLANS, TRIAL_DAYS, canSaveBill, effectivePlanOf, planById, type Feature, type PlanId } from "./plans";
+import {
+  DUNNING_GRACE_DAYS,
+  PLANS,
+  TRIAL_DAYS,
+  canSaveBill,
+  effectivePlanOf,
+  planById,
+  type Feature,
+  type PlanId,
+} from "./plans";
 import {
   activationFromWebhook,
   isLive,
@@ -24,6 +33,8 @@ export type BillingStatus = {
   trialing: boolean;
   trialDaysLeft: number | null;
   trialAvailable: boolean;
+  pastDue: boolean;
+  graceDaysLeft: number | null;
   usage: { buildings: number; savedBillsThisMonth: number };
   limits: { buildings: number; savedBillsPerMonth: number };
   features: Feature[];
@@ -47,11 +58,14 @@ export class BillingService {
     return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), 1));
   }
 
-  /** Latest subscription row that could still be in force (active or trialing). */
+  // active (recurring), trialing, and past_due (dunning grace) can all be in force.
+  private static IN_FORCE = ["active", "trialing", "past_due"];
+
+  /** Latest subscription row that could still be in force. */
   private latestSub(orgId: string): Promise<SubRow> {
     return this.prisma.withOrg(orgId, (tx) =>
       tx.subscription.findFirst({
-        where: { status: { in: ["active", "trialing"] } },
+        where: { status: { in: BillingService.IN_FORCE } },
         orderBy: { startDate: "desc" },
         select: { plan: true, status: true, startDate: true, endDate: true },
       }),
@@ -68,7 +82,7 @@ export class BillingService {
     const { sub, buildings, savedBillsThisMonth, subCount } = await this.prisma.withOrg(orgId, async (tx) => {
       const [sub, buildings, savedBillsThisMonth, subCount] = await Promise.all([
         tx.subscription.findFirst({
-          where: { status: { in: ["active", "trialing"] } },
+          where: { status: { in: BillingService.IN_FORCE } },
           orderBy: { startDate: "desc" },
           select: { plan: true, status: true, startDate: true, endDate: true },
         }),
@@ -82,21 +96,24 @@ export class BillingService {
     const now = new Date();
     const planId = effectivePlanOf(sub, now);
     const plan = planById(planId);
-    const trialing = !!sub && sub.status === "trialing" && planId !== "FREE";
-    const trialDaysLeft =
-      trialing && sub?.endDate ? Math.max(0, Math.ceil((sub.endDate.getTime() - now.getTime()) / DAY_MS)) : null;
+    const inForce = planId !== "FREE";
+    const trialing = inForce && sub?.status === "trialing";
+    const pastDue = inForce && sub?.status === "past_due";
+    const daysTo = (d: Date | null) => (d ? Math.max(0, Math.ceil((d.getTime() - now.getTime()) / DAY_MS)) : null);
 
     return {
       plan: plan.id,
       planName: plan.name,
-      status: trialing ? "trialing" : "active",
+      status: trialing ? "trialing" : pastDue ? "past_due" : "active",
       priceInr: plan.priceInr,
       unit: plan.unit,
       custom: plan.custom,
       periodEnd: sub?.endDate ? sub.endDate.toISOString() : null,
       trialing,
-      trialDaysLeft,
+      trialDaysLeft: trialing ? daysTo(sub?.endDate ?? null) : null,
       trialAvailable: subCount === 0, // never subscribed/trialed before
+      pastDue,
+      graceDaysLeft: pastDue ? daysTo(sub?.endDate ?? null) : null,
       usage: { buildings, savedBillsThisMonth },
       limits: plan.limits,
       features: plan.features,
@@ -190,6 +207,11 @@ export class BillingService {
       this.log.log(`Downgraded org ${target.orgId} to FREE via ${kind}`);
       return { ok: true };
     }
+    if (action === "mark_past_due") {
+      await this.markPastDue(target.orgId);
+      this.log.log(`Org ${target.orgId} marked past_due (grace ${DUNNING_GRACE_DAYS}d) via ${kind}`);
+      return { ok: true };
+    }
     // activate_onetime → 30-day period; activate_recurring → open-ended (cancel webhook ends it).
     await this.activate(target.orgId, plan.id, plan.priceInr, this.periodEnd(action === "activate_recurring" ? "recurring" : "onetime"));
     this.log.log(`Activated ${plan.id} for org ${target.orgId} via ${kind}`);
@@ -206,7 +228,7 @@ export class BillingService {
     const now = new Date();
     await this.prisma.withOrg(orgId, async (tx) => {
       await tx.subscription.updateMany({
-        where: { status: { in: ["active", "trialing"] } },
+        where: { status: { in: BillingService.IN_FORCE } },
         data: { status: "cancelled", endDate: now },
       });
       await tx.subscription.create({
@@ -220,8 +242,24 @@ export class BillingService {
     const now = new Date();
     await this.prisma.withOrg(orgId, (tx) =>
       tx.subscription.updateMany({
-        where: { status: { in: ["active", "trialing"] } },
+        where: { status: { in: BillingService.IN_FORCE } },
         data: { status: "cancelled", endDate: now },
+      }),
+    );
+  }
+
+  /**
+   * A recurring charge failed → keep Pro for a grace window while Razorpay
+   * retries. We mark the active row past_due with a grace deadline; once it
+   * passes, effectivePlanOf() drops the org to Free with no cron. A later
+   * successful charge supersedes this with a fresh active row.
+   */
+  private async markPastDue(orgId: string): Promise<void> {
+    const graceEnd = new Date(Date.now() + DUNNING_GRACE_DAYS * DAY_MS);
+    await this.prisma.withOrg(orgId, (tx) =>
+      tx.subscription.updateMany({
+        where: { status: "active" }, // only paid recurring subs enter dunning
+        data: { status: "past_due", endDate: graceEnd },
       }),
     );
   }

@@ -77,6 +77,19 @@ export function liveServer(): boolean {
 /** Per-request (uncached) fetch options for live SSR reads. */
 export const NO_STORE = { cache: "no-store" as const };
 
+/** Thrown on a non-2xx response, carrying the status + parsed body so callers
+ *  can react to specific cases (e.g. 402 plan-limit → show an upgrade prompt). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public body?: unknown,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const base = getApiBase();
   if (!base) throw new Error("API not configured (NEXT_PUBLIC_API_URL unset)");
@@ -96,7 +109,8 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     },
   });
   if (!res.ok) {
-    throw new Error(`API ${res.status} ${res.statusText} for ${path}`);
+    const body = await res.json().catch(() => undefined);
+    throw new ApiError(`API ${res.status} ${res.statusText} for ${path}`, res.status, body);
   }
   return (await res.json()) as T;
 }

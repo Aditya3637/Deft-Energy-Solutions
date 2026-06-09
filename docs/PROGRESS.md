@@ -7,6 +7,23 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Monetization #4 — dunning grace + in-app upgrade prompt)
+- **Two revenue-retention levers, both shipped.** No schema change.
+- **Dunning (don't lose a customer to one failed charge):** `subscription.pending` →
+  `webhookAction` "mark_past_due" → the active sub becomes **`past_due` with a 7-day grace endDate**.
+  `effectivePlanOf` treats `past_due` as in force **until** the grace deadline, so the customer keeps Pro
+  while Razorpay retries; after grace it drops to Free with **no cron** (derived at read time). A recovered
+  `subscription.charged` supersedes it; `subscription.halted` (retries exhausted) downgrades immediately.
+  `status()` exposes `pastDue` + `graceDaysLeft`; the Settings panel shows a red **"Payment failed — N days
+  left · Update payment"** banner.
+- **402 → in-app upgrade prompt (convert the wall into a sale):** `apiFetch` now throws a typed `ApiError`
+  (status + parsed body). `bills.create` catches **402** and returns `{ limitReached, limit:{reason,
+  upgradeTo} }` instead of a dead-end; the analyze flow renders an **`UpgradePrompt`** (reason + one-click
+  `UpgradeButton` to the server-supplied `upgradeTo` + "See plans") right where the save was blocked.
+- **CI** `billing-check.ts`: `subscription.pending → mark_past_due`, and `effectivePlanOf` for `past_due`
+  within-grace (PRO) vs after-grace (FREE).
+- **To use dunning live:** subscribe the Razorpay webhook to `subscription.pending` / `halted` / `charged`.
+
 ### 2026-06-09 (Monetization #3 — 14-day Pro trial + recurring subscriptions)
 - **The conversion lever + auto-renewing revenue.** No schema change (notes-based mapping; trial/expiry
   derived at read-time like payment status — no cron).

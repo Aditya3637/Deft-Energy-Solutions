@@ -44,7 +44,12 @@ export function razorpayConfigured(): boolean {
   return !!process.env.RAZORPAY_KEY_ID?.trim() && !!process.env.RAZORPAY_KEY_SECRET?.trim();
 }
 
-export type WebhookAction = "activate_onetime" | "activate_recurring" | "downgrade" | "ignore";
+export type WebhookAction =
+  | "activate_onetime"
+  | "activate_recurring"
+  | "mark_past_due"
+  | "downgrade"
+  | "ignore";
 
 /** Map a Razorpay webhook event name to the action it should trigger. Pure. */
 export function webhookAction(event: string): WebhookAction {
@@ -56,8 +61,12 @@ export function webhookAction(event: string): WebhookAction {
     case "subscription.charged":
     case "subscription.resumed":
       return "activate_recurring";
-    case "subscription.cancelled":
+    // A charge failed but Razorpay will retry → enter the dunning grace window.
+    case "subscription.pending":
+      return "mark_past_due";
+    // Retries exhausted / ended → downgrade now.
     case "subscription.halted":
+    case "subscription.cancelled":
     case "subscription.completed":
     case "subscription.expired":
       return "downgrade";

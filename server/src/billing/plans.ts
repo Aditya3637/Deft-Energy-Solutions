@@ -122,17 +122,23 @@ export type Gate = { allowed: boolean; limit: number; reason?: string; upgradeTo
  * one-time period silently falls back to Free without a cron. A recurring
  * subscription has no endDate and stays active until a cancel webhook flips it.
  */
+const IN_FORCE = new Set(["active", "trialing", "past_due"]);
+
 export function effectivePlanOf(
   sub: { plan: string; status: string; endDate: Date | null } | null,
   now: Date,
 ): PlanId {
   if (!sub) return "FREE";
-  if (sub.status !== "active" && sub.status !== "trialing") return "FREE";
-  if (sub.endDate && sub.endDate.getTime() < now.getTime()) return "FREE"; // expired trial / lapsed period
+  // active (recurring → endDate null) | trialing (endDate = trial end) |
+  // past_due (endDate = dunning grace deadline) all stay in force until endDate.
+  if (!IN_FORCE.has(sub.status)) return "FREE";
+  if (sub.endDate && sub.endDate.getTime() < now.getTime()) return "FREE"; // trial / grace / period lapsed
   return planById(sub.plan).id;
 }
 
 export const TRIAL_DAYS = 14;
+/** Days a failed recurring charge keeps Pro while we retry, before downgrade. */
+export const DUNNING_GRACE_DAYS = 7;
 
 /** Can this org add another building? */
 export function canAddBuilding(id: string, currentCount: number): Gate {
