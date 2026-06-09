@@ -9,9 +9,10 @@
 -- BYPASSRLS — create a dedicated app role with table privileges only.
 
 -- Helper: current tenant (NULL when unset; 'true' = missing_ok so it never errors).
-CREATE OR REPLACE FUNCTION current_org() RETURNS uuid
+-- Returns text because Prisma `String @id` columns are `text`, not `uuid`.
+CREATE OR REPLACE FUNCTION current_org() RETURNS text
 LANGUAGE sql STABLE AS $$
-  SELECT NULLIF(current_setting('app.current_org', true), '')::uuid
+  SELECT NULLIF(current_setting('app.current_org', true), '')
 $$;
 
 -- The tenant root. FORCE so even the table owner (the app's connection role on
