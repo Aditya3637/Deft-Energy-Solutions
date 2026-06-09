@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { DiagnosisService } from "../diagnosis/diagnosis.service";
 import { CreateBillDto } from "./dto/create-bill.dto";
+import { parseDdmmyyyy } from "./due-date.util";
 
 @Injectable()
 export class BillsService {
@@ -14,7 +15,13 @@ export class BillsService {
 
   /** Persist a bill, then run + store its diagnosis, and return both. */
   async create(orgId: string, dto: CreateBillDto) {
-    const data: Prisma.ElectricityBillUncheckedCreateInput = { orgId, ...dto };
+    const data: Prisma.ElectricityBillUncheckedCreateInput = {
+      orgId,
+      ...dto,
+      // Parse the extracted DD-MM-YYYY due date into a queryable timestamp so the
+      // payment/due-date tracker can find overdue/due-soon bills at the DB level.
+      dueOn: parseDdmmyyyy(dto.dueDate),
+    };
     const bill = await this.prisma.withOrg(orgId, (tx) =>
       tx.electricityBill.create({ data }),
     );

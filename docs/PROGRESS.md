@@ -5,7 +5,25 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
+- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅
+
+### 2026-06-09 (Payments & due-date tracking — multi-asset)
+- **New `/app/payments` view: every asset's bills, due dates and payment status in one place.**
+  StatCards (Outstanding ₹, Overdue count+₹, Due-in-7-days, Paid-on-time %) + a sortable table
+  (overdue first) with a **Mark paid / Undo** action per bill.
+- **Model:** `ElectricityBill` gained `dueOn` (parsed from the extracted DD-MM-YYYY due date at create),
+  `paidAt`, `paidAmount` (+ `@@index([dueOn])`). Payment **status is DERIVED, never stored** —
+  PAID_ON_TIME / PAID_LATE / OVERDUE / DUE_SOON / UPCOMING — so it can't go stale.
+- **Backend** `server/src/payments/`: `GET /v1/payments/summary` (portfolio totals), `GET /v1/payments`
+  (tracked bills + derived status, urgency-sorted), `POST /v1/payments/:id/pay` and `/unpay`. RLS-scoped.
+  `bills.service` now parses the due date into `dueOn` on every saved bill (`bills/due-date.util.ts`).
+- **Seed:** ~36 bills across the 6 buildings with due dates relative to *now* (recompute each deploy) in
+  mixed states, so the live view is populated and demoable.
+- **Frontend:** `lib/api/payments.ts` seam (live on Vercel SSR, fixture on static Pages) +
+  `components/app/payments-table.tsx` (optimistic mark-paid) + nav entry. Status on-time/late judged
+  against the due date.
+- **Note:** bills are now true payment *obligations*, not just extraction records — the foundation the
+  collection-agent backend will sit on next.
 
 ### 2026-06-09 (Audit — diagnosis-engine correctness for high-stakes use)
 - **Audited the extract→confirm→diagnose→display chain and fixed real false-positive bugs** in BOTH
@@ -167,7 +185,7 @@
   which the seam is set up to receive → F (wire endpoints) → G (integrations + real OCR) → H (security/perf/
   testing). (OCR remains Stage G, clearly simulated.)
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
-  `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/accuracy` · `/app/roi` · `/app/capex` · `/app/compliance` ·
+  `/app/payments` · `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/accuracy` · `/app/roi` · `/app/capex` · `/app/compliance` ·
   `/app/carbon` · `/app/markets` · `/app/assets` · `/app/marketplace` · `/app/training` ·
   `/app/leaderboard` · `/app/settings`
 - **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·

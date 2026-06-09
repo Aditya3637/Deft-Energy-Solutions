@@ -154,8 +154,54 @@ async function main() {
       });
     }
 
+    // Payment / due-date tracking demo: a spread of bills across all buildings
+    // with due dates relative to *now*, in mixed states (overdue / due-soon /
+    // upcoming / paid-on-time / paid-late). Stable ids → idempotent re-seed, and
+    // due dates recompute on each deploy so the demo stays current.
+    const today = new Date();
+    const addDays = (base: Date, n: number) => new Date(base.getTime() + n * 86_400_000);
+    const fmt = (d: Date) =>
+      `${String(d.getUTCDate()).padStart(2, "0")}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${d.getUTCFullYear()}`;
+    // due = days from today; paid = days from dueOn (null = still unpaid).
+    const PAY_PLAN: { due: number; paid: number | null }[] = [
+      { due: -28, paid: null }, // overdue
+      { due: -9, paid: null }, // overdue
+      { due: 5, paid: null }, // due soon
+      { due: 19, paid: null }, // upcoming
+      { due: -44, paid: -3 }, // paid on time
+      { due: -61, paid: 6 }, // paid late
+    ];
+    let payCount = 0;
+    for (const b of BUILDINGS) {
+      const baseAmt = (b.contractDemandKva ?? 600) * 1500;
+      for (let i = 0; i < PAY_PLAN.length; i++) {
+        const p = PAY_PLAN[i];
+        const dueOn = addDays(today, p.due);
+        const paidAt = p.paid === null ? null : addDays(dueOn, p.paid);
+        const amount = Math.round(baseAmt * (0.85 + ((i * 7) % 30) / 100));
+        const id = `pay-${b.id}-${i}`;
+        const common = {
+          buildingId: b.id,
+          consumerName: b.name,
+          discom: b.discom,
+          totalAmountDue: amount,
+          dueDate: fmt(dueOn),
+          dueOn,
+          paidAt,
+          paidAmount: paidAt ? amount : null,
+          billDate: fmt(addDays(dueOn, -20)),
+        };
+        await tx.electricityBill.upsert({
+          where: { id },
+          update: common,
+          create: { id, orgId: DEMO_ORG_ID, ...common },
+        });
+        payCount += 1;
+      }
+    }
+
     // eslint-disable-next-line no-console
-    console.log(`Seed: ${BUILDINGS.length} buildings upserted, ${legacy.length} legacy pruned.`);
+    console.log(`Seed: ${BUILDINGS.length} buildings, ${payCount} tracked bills, ${legacy.length} legacy pruned.`);
   });
 }
 

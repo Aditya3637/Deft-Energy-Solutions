@@ -12,6 +12,7 @@ import { AlertsModule } from "./alerts/alerts.module";
 import { ExtractModule } from "./extract/extract.module";
 import { BillFetchModule } from "./billfetch/billfetch.module";
 import { CorrectionsModule } from "./corrections/corrections.module";
+import { PaymentsModule } from "./payments/payments.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CorrectionsModule } from "./corrections/corrections.module";
     ExtractModule,
     BillFetchModule,
     CorrectionsModule,
+    PaymentsModule,
   ],
   controllers: [HealthController],
 })

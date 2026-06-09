@@ -240,12 +240,20 @@ model ElectricityBill {
   billingPeriodDays    Int?
   meterNumber          String?
 
+  // Payment / due-date tracking (Stage 1). `dueOn` is the parsed `dueDate` for
+  // querying; `paidAt`/`paidAmount` are null until the bill is marked paid.
+  // Status (overdue / due-soon / paid-on-time / paid-late) is DERIVED, never stored.
+  dueOn      DateTime?
+  paidAt     DateTime?
+  paidAmount Float?
+
   org       Organisation @relation(fields: [orgId], references: [id])
   building  Building?    @relation(fields: [buildingId], references: [id])
   diagnosis Diagnosis?
 
   @@index([orgId])
   @@index([buildingId])
+  @@index([dueOn])
 }
 
 model Diagnosis {
