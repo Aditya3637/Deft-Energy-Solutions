@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
 
 import { FIELD_DEFS, defForKey } from "./bill-field-defs";
-import { extractBillFields, extractModel, isConfigured, type RawField } from "./anthropic";
+import { type RawField } from "./extract-core";
+import { extractBill, isConfigured, providerModel, providerName } from "./provider";
 
 /** Matches the frontend `ExtractedField` shape (lib/mock/bill.ts) 1:1. */
 export type ExtractedField = {
@@ -16,6 +17,7 @@ export type ExtractedField = {
 export type ExtractResult = {
   fields: ExtractedField[];
   model: string;
+  provider: string;
   /** How many of the 42 fields the model could read off the bill. */
   found: number;
   total: number;
@@ -37,7 +39,7 @@ export class ExtractService {
   }
 
   async extract(file: { buffer: Buffer; mimetype: string }): Promise<ExtractResult> {
-    const call = await extractBillFields(file);
+    const call = await extractBill(file);
 
     // Highest-confidence wins if the model emits a key twice.
     const best = new Map<string, RawField>();
@@ -70,7 +72,8 @@ export class ExtractService {
 
     return {
       fields,
-      model: call.model || extractModel(),
+      model: call.model || providerModel(),
+      provider: providerName(),
       found: fields.filter((f) => f.value.length > 0).length,
       total: FIELD_DEFS.length,
       lowConfidence,

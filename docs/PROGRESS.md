@@ -7,6 +7,21 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G+ — sanity checks + pluggable providers)
+- **Arithmetic sanity-check pass on the review screen** (`lib/bill-checks.ts` → `SanityChecks` card).
+  Re-runs live as the user edits. No-false-positive discipline: each check fires only when its inputs are
+  present and on a physical impossibility or large discrepancy. Checks: charge lines vs total (warns only
+  when parts exceed the whole), apparent ≥ active energy, PF range + PF vs kWh/kVAh, ToD zones vs total,
+  recorded vs contract demand (exceedance info), due-date ≥ bill-date, billing-period plausibility.
+- **Extraction is now provider-agnostic** (`EXTRACT_PROVIDER`): `anthropic` (default, PDF+images, paid,
+  most accurate) or `openai` (any OpenAI-compatible host — Llama via Groq / Meta Llama API / OpenRouter /
+  Together, Gemini-compat, or self-hosted Ollama; images only; free/low-cost tiers). Refactored into
+  `extract-core.ts` (shared prompt/schema/parse/retry) + `provider-anthropic.ts` + `provider-openai.ts`
+  + `provider.ts` dispatcher. Same 42-field contract + confidence + review UI across all providers.
+- **Honest cost note:** no vision API is truly free at 50k bills/mo — free tiers are dev/low-volume.
+  Cheapest reliable at scale = Gemini Flash (paid) or Haiku; genuine $0/call = self-hosted Llama-Vision
+  (GPU). Documented in `docs/OCR-STRATEGY.md` (providers & cost table).
+
 ### 2026-06-09 (Stage G — real bill extraction)
 - **Replaced the simulated upload with real vision OCR.** New backend module `server/src/extract/`:
   - `POST /v1/extract` — multipart upload (field `file`, ≤25 MB; PDF / JPEG / PNG / WebP).

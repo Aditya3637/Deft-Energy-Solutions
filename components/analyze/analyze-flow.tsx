@@ -14,11 +14,14 @@ import {
   ChevronDown,
   Lock,
   CheckCircle2,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
 import { extract } from "@/lib/api/extract";
+import { arithmeticChecks, type BillCheck } from "@/lib/bill-checks";
 import { useToast } from "@/components/ui/toast";
 import { fullDiagnose } from "@/lib/diagnosis";
 import { TOTAL_CHECKS, CATEGORIES, DATA_NEED_LABELS } from "@/lib/loss-taxonomy";
@@ -209,6 +212,69 @@ function ExtractingStep() {
   );
 }
 
+/* --------------------------------------------------------- Sanity checks */
+
+function SanityChecks({ checks }: { checks: BillCheck[] }) {
+  if (checks.length === 0) return null;
+  const warn = checks.filter((c) => c.status === "warn");
+  const info = checks.filter((c) => c.status === "info");
+  const okCount = checks.filter((c) => c.status === "ok").length;
+
+  const flagged: BillCheck[] = [...warn, ...info];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          {warn.length > 0 ? (
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          )}
+          Quick checks
+        </CardTitle>
+        <CardDescription>
+          {warn.length > 0
+            ? `${warn.length} value${warn.length > 1 ? "s" : ""} to double-check before continuing.`
+            : "The numbers on this bill add up."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2.5">
+        {flagged.map((c) => {
+          const isWarn = c.status === "warn";
+          return (
+            <div
+              key={c.id}
+              className={cn(
+                "flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm",
+                isWarn
+                  ? "border-amber-500/30 bg-amber-500/10"
+                  : "border-border bg-muted/40",
+              )}
+            >
+              {isWarn ? (
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <div>
+                <span className="font-medium">{c.label}.</span>{" "}
+                <span className="text-muted-foreground">{c.detail}</span>
+              </div>
+            </div>
+          );
+        })}
+        {okCount > 0 && (
+          <p className="flex items-center gap-2 pt-0.5 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            {okCount} consistency check{okCount > 1 ? "s" : ""} passed.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ---------------------------------------------------------------- Review */
 
 function ReviewStep({
@@ -227,6 +293,8 @@ function ReviewStep({
   const filled = fields.filter((f) => f.value.trim().length > 0);
   const lowConfidence = filled.filter((f) => f.confidence < 0.8).length;
   const missing = fields.length - filled.length;
+  // Re-runs on every edit (fields is state) — live data-quality feedback.
+  const checks = React.useMemo(() => arithmeticChecks(fields), [fields]);
 
   return (
     <div className="space-y-6">
@@ -248,6 +316,8 @@ function ReviewStep({
           Correct anything that looks off.
         </p>
       </div>
+
+      <SanityChecks checks={checks} />
 
       {GROUP_ORDER.map((group) => {
         const groupFields = fields.filter((f) => f.group === group);

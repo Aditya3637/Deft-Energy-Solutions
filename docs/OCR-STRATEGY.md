@@ -104,3 +104,39 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
 4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
 5. **Live accuracy dashboard** (SPEC_V2 §7 matrix wired to the gold corpus) — so accuracy is a measured,
    visible number, per DISCOM, not a claim.
+
+## Extraction providers & cost (Stage G — implemented)
+
+`POST /v1/extract` is provider-agnostic. `EXTRACT_PROVIDER` selects the backend; the request shape, the
+42-field contract, the confidence scoring and the review/correct UI are identical across providers.
+
+| Provider (`EXTRACT_PROVIDER`) | Hosts | Input | Cost | Use for |
+|---|---|---|---|---|
+| `anthropic` (default) | Claude vision | **PDF + images** | Paid (Opus ~$5/1M in; Haiku ~5× cheaper) | Production accuracy; scanned/digital PDFs |
+| `openai` | Groq · Meta Llama API · OpenRouter · Together · Gemini-compat · **Ollama (self-host)** | **Images only** | Free tier / self-host $0-per-call | Dev, low volume, cost-sensitive |
+
+### The honest "free" picture
+There is **no vision API that is truly free at ~50,000 bills/month** — every free tier is rate-limited and
+meant for development or low volume:
+
+- **Groq** (Llama 4 Scout/Maverick vision) — generous free tier, very fast; best free dev option.
+- **Meta Llama API** (Llama 4, OpenAI-compatible) — free developer preview; limits will tighten at GA.
+- **OpenRouter** `:free` Llama vision variants — genuinely $0 but tight rate limits, variable uptime.
+- **Google Gemini Flash** — free tier (~1,500 req/day) with strong OCR; **paid Flash is the cheapest
+  *reliable* option at scale** (well below Claude).
+
+For genuine $0-per-call at volume, **self-host**:
+- **Ollama / vLLM running Llama 3.2-Vision or Llama 4** — no API fee, but needs a GPU (real infra cost).
+- **Tesseract / PaddleOCR / Surya** (open-source OCR) — free, but text-only; needs a parser/LLM layer to
+  reach the structured 42 fields, and struggle on complex/scanned Indian bill layouts.
+
+### Recommendation
+- **Dev / pilot:** `openai` + Groq (Llama 4) or Gemini Flash free tier — $0, image uploads.
+- **Production at lowest cost:** `anthropic` with `EXTRACT_MODEL=claude-haiku-4-5`, **or** Gemini Flash
+  (paid), **or** self-hosted Llama-Vision once volume justifies a GPU.
+- **Production at best accuracy:** `anthropic` default (Opus), reserving the free path for overflow/dev.
+
+Free OpenAI-compatible hosts take **images, not PDFs** (no server-side PDF rasteriser is bundled — it
+needs a native dep). On the free path, upload a photo/screenshot, or keep `anthropic` for PDFs. Most
+DISCOM-portal PDFs also have a text layer — a digital-PDF text parser (de-risking step 1) will be the
+genuinely-free path for those and is the next addition.

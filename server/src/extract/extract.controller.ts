@@ -9,7 +9,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 
 import { ExtractService } from "./extract.service";
-import { ExtractionError, UnsupportedMediaError } from "./anthropic";
+import { ExtractionError, UnsupportedMediaError } from "./extract-core";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB — comfortably covers multi-page scans.
 
