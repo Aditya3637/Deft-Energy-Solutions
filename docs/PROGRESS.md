@@ -7,6 +7,28 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Audit — diagnosis-engine correctness for high-stakes use)
+- **Audited the extract→confirm→diagnose→display chain and fixed real false-positive bugs** in BOTH
+  engines (lib/diagnosis.ts + server/src/diagnosis/engine.ts, kept byte-identical):
+  - **1.3 billing-demand floor:** no longer flags legitimate tariff-floor billing demand (≈75% of contract
+    demand when recorded MD is lower) as an over-billing loss. Now fires only when billing demand exceeds
+    both recorded MD *and* the floor; needs contract demand to judge (else stays healthy).
+  - **6.5 arrears:** arrears are money OWED, not a saving — now flagged for review but contribute ₹0 to
+    the recoverable headline (were being summed in as "savings").
+  - **3.4 ToD-not-applied:** gated on ToD eligibility (HT supply or ≥100 kW) so LT/small consumers aren't
+    falsely told they're losing money.
+  - **Power-factor robustness:** new `pf01()` tolerates PF entered as a percentage (96 → 0.96), preventing
+    2.1/2.2/2.3 mis-fires; 2.3 reworded to "verify if not already credited."
+  - **Provisional notes** on 1.1/1.2 (single-month → confirm with 12-month history).
+- **Locked it in CI:** `server/scripts/diagnosis-check.ts` asserts the no-false-positive invariants
+  (floor, arrears, ToD eligibility, PF%, clean-bill = ₹0) and runs in Server CI (`npm run diagnosis:check`).
+- **Honest posture:** OCR of arbitrary bills is never 100% — that's why every field is human-confirmed +
+  arithmetic-checked before it drives the engine, and the engine itself is conservative + now invariant-
+  tested. The Acme sample headline is unchanged by these fixes (verified: its fields don't trip them).
+- **Found (NOT yet built):** real multi-asset *payment/due-date tracking* (bills are extraction records,
+  no paid/overdue status) and a real *collection-agent backend* (the /field/collection route is a mock UI;
+  no payments/persistence). Gap analysis captured; proposed as next builds.
+
 ### 2026-06-09 (Stage G⁷ — template effectiveness: with/without accuracy)
 - **`templateApplied` now recorded on every feedback row** (schema + DTO + capture) so the accuracy view
   can prove whether per-DISCOM templates actually help. `GET /v1/corrections/accuracy` now returns

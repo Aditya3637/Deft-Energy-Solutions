@@ -64,6 +64,12 @@ function str(fields: ExtractedField[], key: string): string {
   return (fields.find((f) => f.key === key)?.value ?? "").toUpperCase();
 }
 
+/** Power factor as a 0–1 decimal, tolerant of bills/entries that use % (96 → 0.96). */
+function pf01(n: (k: string) => number): number {
+  const p = n("powerFactor");
+  return p > 1.5 ? p / 100 : p;
+}
+
 function ratePerKva(n: (k: string) => number): number {
   const bd = n("billingDemandKva");
   const fc = n("fixedDemandCharges");
@@ -96,15 +102,19 @@ const detectors: Record<string, Det> = {
     const md = n("maxDemandKva");
     if (cd <= 0 || md <= 0) return { status: "healthy" };
     return md > cd
-      ? { status: "loss", annualINR: Math.round((md - cd) * ratePerKva(n) * 1.75 * 12), note: "Demand exceeded the contract" }
+      ? { status: "loss", annualINR: Math.round((md - cd) * ratePerKva(n) * 1.75 * 12), note: "Demand exceeded the contract this month — recurring if it repeats; confirm with 12-month history" }
       : { status: "healthy" };
   },
+  // Genuine over-billing ONLY when billing demand exceeds both recorded MD and
+  // the tariff's contract-demand floor (~75% of CD); without CD, don't flag.
   "1.3": (n) => {
     const bd = n("billingDemandKva");
     const md = n("maxDemandKva");
-    if (md <= 0 || bd <= 0) return { status: "healthy" };
-    return bd > md * 1.05
-      ? { status: "loss", annualINR: Math.round((bd - md) * ratePerKva(n) * 12), note: "Billed demand exceeds recorded demand" }
+    const cd = n("contractDemandKva");
+    if (md <= 0 || bd <= 0 || cd <= 0) return { status: "healthy" };
+    const expected = Math.max(md, 0.75 * cd);
+    return bd > expected * 1.05
+      ? { status: "loss", annualINR: Math.round((bd - expected) * ratePerKva(n) * 12), note: "Billed demand exceeds both recorded demand and the contract-demand floor" }
       : { status: "healthy" };
   },
   "1.4": (n) => {
@@ -115,7 +125,7 @@ const detectors: Record<string, Det> = {
       : { status: "healthy" };
   },
   "2.1": (n) => {
-    const pf = n("powerFactor");
+    const pf = pf01(n);
     const pen = n("pfPenaltyAmt");
     return pf > 0 && pf < 0.95 && pen > 0
       ? { status: "loss", annualINR: Math.round(pen * 12), note: `Power factor ${pf.toFixed(2)}` }
@@ -123,7 +133,7 @@ const detectors: Record<string, Det> = {
   },
   "2.2": (n) => {
     if (n("pfPenaltyAmt") > 0) return { status: "healthy", note: "kWh-based billing" };
-    const pf = n("powerFactor");
+    const pf = pf01(n);
     const kvah = n("apparentKvah");
     const kwh = n("energyKwh");
     const ec = n("energyCharges");
@@ -134,10 +144,10 @@ const detectors: Record<string, Det> = {
     return { status: "healthy" };
   },
   "2.3": (n) => {
-    const pf = n("powerFactor");
+    const pf = pf01(n);
     const fc = n("fixedDemandCharges");
     return pf >= 0.95 && fc > 0 && n("pfPenaltyAmt") === 0
-      ? { status: "loss", annualINR: Math.round(fc * 0.02 * 12), note: "Eligible for a high-PF rebate" }
+      ? { status: "loss", annualINR: Math.round(fc * 0.02 * 12), note: "If not already credited, you may be eligible for a high-PF rebate (~2% of demand charges) — verify" }
       : { status: "healthy" };
   },
   "3.1": (n) => {
@@ -148,11 +158,14 @@ const detectors: Record<string, Det> = {
       ? { status: "loss", annualINR: Math.round(p * 0.2 * (pr - off) * 12), note: "Shift ~20% of peak load to off-peak" }
       : { status: "healthy" };
   },
-  "3.4": (n) => {
+  // Only flag ToD-eligible consumers (HT supply or ≥100 kW) — avoids a false
+  // positive for LT/small consumers who have no ToD option.
+  "3.4": (n, fields) => {
     const anyTod = n("todPeakKwh") + n("todOffPeakKwh") + n("todNormalKwh");
     const ec = n("energyCharges");
-    return anyTod === 0 && ec > 0 && n("maxDemandKva") > 0
-      ? { status: "loss", annualINR: Math.round(ec * 0.05 * 12), note: "No ToD slabs on the bill despite eligibility" }
+    const eligible = str(fields, "supplyVoltage").includes("HT") || n("sanctionedLoadKw") >= 100;
+    return anyTod === 0 && ec > 0 && n("maxDemandKva") > 0 && eligible
+      ? { status: "loss", annualINR: Math.round(ec * 0.05 * 12), note: "No ToD slabs shown — if eligible, ToD-aware scheduling can cut energy cost" }
       : { status: "healthy" };
   },
   "5.2": (n, fields) => {
@@ -164,9 +177,13 @@ const detectors: Record<string, Det> = {
       ? { status: "loss", annualINR: Math.round(ec * 0.07 * 12), note: "Voltage level and tariff category disagree" }
       : { status: "healthy" };
   },
+  // Arrears are money OWED, not a saving — flagged for review but contribute ₹0
+  // to recoverable savings (no annualINR), so they never inflate the headline.
   "6.5": (n) => {
     const a = n("arrears");
-    return a > 0 ? { status: "loss", annualINR: Math.round(a), note: "Arrears on the bill — review (one-time)" } : { status: "healthy" };
+    return a > 0
+      ? { status: "loss", note: `Arrears of ₹${Math.round(a)} on the bill — money owed, not a saving; verify it's legitimate` }
+      : { status: "healthy" };
   },
   "7.1": (n) => {
     const kwh = n("energyKwh");

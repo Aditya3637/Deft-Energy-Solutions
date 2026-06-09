@@ -35,6 +35,8 @@ jobs:
         run: npx prisma generate
       - name: Type-check & build
         run: npm run build
+      - name: Diagnosis engine invariants
+        run: npx ts-node --transpile-only scripts/diagnosis-check.ts
 
   docker:
     runs-on: ubuntu-latest
