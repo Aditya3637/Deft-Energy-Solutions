@@ -70,8 +70,16 @@
      `CapexRequest` records** + reverse auction on the top open RFQ), `GET /v1/training` (curated course
      library). Honest empty states: no vendor-bidding system yet → 0 bids; no progress store yet →
      courses at 0%. CI invariant `ecosystem-check.ts` over multi-DISCOM personas.
-     *Deferred:* vendor-bidding/RFQ workflow (Stage F), per-learner course-progress store.
-   - Still mock: **capex** (CapexRequest exists server-side — quick win next).
+     Transactional follow-ups tracked in #8.
+
+8. **Transactional features still read-only / mock** (each needs new RLS tables → `schema.prisma` +
+   `prisma/rls.sql` table list + the DPDP erase cascade in `account.service.ts`, plus endpoints + UI):
+   - **RFQ / vendor-bidding workflow** — create RFQ → place bids → award. New `Rfq` + `Bid` tables (RLS);
+     marketplace already shows the org's RFQs (from `CapexRequest`) read-only with an honest 0-bid state.
+   - **Per-learner course-progress store** — persist Start/Continue progress. New `CourseProgress` table
+     (RLS); training catalog is live, progress is currently fixed at 0%.
+   - **Capex approval → live** — `/app/capex` still reads the mock; `CapexRequest` exists server-side
+     (marketplace RFQs already read it). Wire the live read + request/approve flow (FM→EM→CFO→Board).
 
 ---
 
@@ -99,5 +107,9 @@
 | Diagnosis engine | persona + 8 DISCOMs, no-false-positive invariants (CI) | ✅ `npm run persona:check` |
 | Commission / collections math | money invariants (CI) | ✅ `npm run collections:check` |
 | Auth (JWT) | sign/verify/tamper/kind-confusion (CI) | ✅ `npm run auth:check` |
+| Compliance (scorecard/BRSR/ESG) | 5 personas, no-false-positive (CI) | ✅ `npm run compliance:check` |
+| Markets & DER (B6) | multi-DISCOM personas, honest-zeros (CI) | ✅ `npm run markets:check` |
+| Ecosystem (B7) | badges/RFQs/rewards personas (CI) | ✅ `npm run ecosystem:check` |
+| Integration adapters (IEX/registry) | provider select + pure mappers (CI) | ✅ `npm run integrations:check` |
 | Bill extraction (vision-OCR) | real PDFs per DISCOM, end-to-end | ⏳ needs backend key (big-ticket #2) |
 | Payments / collections flows | persona + multi-DISCOM | ⏳ backlog |
