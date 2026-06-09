@@ -7,6 +7,26 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Monetization #1 — Plans, entitlements & billing status)
+- **CEO call: built the cash register.** The product found savings but could not charge — now there's a
+  single source of truth for plans + entitlements, enforced server-side (enforcement + payment seam land
+  next increment).
+- **`server/src/billing/plans.ts`** (pure, CI-tested) — the canonical catalog: **Free** (1 building, 3 saved
+  bills/mo, analysis only), **Pro** (₹4,999/site/mo, 25 buildings, unlimited bills, alerts/tasks/ROI/
+  compliance/carbon/exports), **Enterprise** (custom, unlimited, markets/assets/managed-recovery/SSO/API/
+  white-label). Pure gates: `canAddBuilding`, `canSaveBill`, `hasFeature`, `nextPlan` (with `upgradeTo`).
+  **Bill analysis is never gated** — it's the funnel.
+- **`GET /v1/billing`** — the org's live plan + **real usage** (buildings, saved bills this month, from RLS
+  queries) + limits + features. **`GET /v1/billing/plans`** — the public catalog. Reads the existing
+  `Subscription` row (defaults to Free).
+- **Frontend:** `lib/api/billing.ts` seam; **pricing page now renders from the live catalog** (no more
+  hardcoded tiers — can't drift from enforcement); Settings **"Plan & billing"** panel shows current plan,
+  **usage vs limits** with bars, included features, and an upgrade CTA.
+- **CI invariant** `scripts/billing-check.ts`: catalog integrity, exact limit enforcement, feature gating
+  per tier, upgrade ladder. No schema change (`Subscription`/`Plan` already existed).
+- **Next:** session-gated enforcement on create paths + a Razorpay payment seam (with manual fallback) so
+  upgrades actually transact.
+
 ### 2026-06-09 (Stage G — IEX price feed + carbon-credit registry adapters scaffolded)
 - **Two external feeds now have provider seams** (same pattern as the OCR / BBPS adapters): a built-in
   fallback works today; a real provider activates the moment its account/key is set.

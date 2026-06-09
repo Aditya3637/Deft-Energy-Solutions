@@ -15,6 +15,7 @@ import { capex } from "./capex";
 import { markets } from "./markets";
 import { ecosystem } from "./ecosystem";
 import { bills } from "./bills";
+import { billing } from "./billing";
 
 export const api = {
   portfolio,
@@ -26,6 +27,7 @@ export const api = {
   markets,
   ecosystem,
   bills,
+  billing,
 };
 
 // Re-export domain types + presentation constants so call sites import only from "@/lib/api".
@@ -38,3 +40,4 @@ export * from "./capex";
 export * from "./markets";
 export * from "./ecosystem";
 export * from "./bills";
+export * from "./billing";

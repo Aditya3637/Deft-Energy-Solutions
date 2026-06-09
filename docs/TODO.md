@@ -93,7 +93,10 @@
 - [ ] Settlement reconciliation (DSR file ↔ `Remittance` rows) for collections.
 - [ ] Per-DISCOM template expansion driven by the accuracy dashboard's "hardest fields".
 - [ ] Server-side PDF→image rasteriser so the free `openai`/Llama provider can handle scanned PDFs.
-- [ ] Subscription/billing wiring (Plan tiers → entitlements).
+- [~] **Monetization (Plan tiers → entitlements).** ✅ Plan catalog + pure entitlement gates
+      (`server/src/billing/plans.ts`, CI `billing-check.ts`), `GET /v1/billing(/plans)` with live usage,
+      pricing page + Settings "Plan & billing" panel. *Next:* session-gated enforcement on create paths +
+      Razorpay payment seam (manual fallback) so upgrades transact.
 - [ ] Customer-angle test harness for payments + collections modules (persona + multi-DISCOM).
 - [ ] Migrate CI actions to Node 24 (deprecation warning on actions/* @v4 / node20).
 - [ ] Bill detail page: show the full 58-check diagnosis (findings + needs-data) per saved bill.

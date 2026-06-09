@@ -17,6 +17,7 @@ import { CollectionsModule } from "./collections/collections.module";
 import { ComplianceModule } from "./compliance/compliance.module";
 import { MarketsModule } from "./markets/markets.module";
 import { EcosystemModule } from "./ecosystem/ecosystem.module";
+import { BillingModule } from "./billing/billing.module";
 import { AuthModule } from "./auth/auth.module";
 import { AccountModule } from "./account/account.module";
 
@@ -40,6 +41,7 @@ import { AccountModule } from "./account/account.module";
     ComplianceModule,
     MarketsModule,
     EcosystemModule,
+    BillingModule,
   ],
   controllers: [HealthController],
 })

@@ -51,6 +51,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/ecosystem-check.ts
       - name: Integration adapters (IEX / registry) invariants
         run: npx ts-node --transpile-only scripts/integrations-check.ts
+      - name: Plan & entitlement invariants
+        run: npx ts-node --transpile-only scripts/billing-check.ts
 
   docker:
     runs-on: ubuntu-latest
