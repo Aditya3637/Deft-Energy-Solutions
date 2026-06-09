@@ -59,6 +59,15 @@
 
 ## Log
 
+### 2026-06-09 (Backend parity — portfolio domain)
+- **Building** model gains `trendL Float[]`, `billsReceived`, `billsExpected` (matches the frontend shape).
+  **Seed** upserts all **6** demo buildings by stable slug id (links match the frontend), backfills the new
+  columns, prunes legacy rows from the first deploy, keeps one sample bill.
+- New **portfolio** module: `GET /v1/portfolio/{totals,monthly,forecast,recent-bills}` — server ports of the
+  frontend aggregate derivations, so the live dashboard matches the demo. RLS-scoped.
+- Push auto-redeploys Render (db push adds columns, seed refreshes). Next: switch the frontend
+  `api.portfolio.*` server pages to live-fetch (gated to Vercel SSR), then deploy to Vercel.
+
 ### 2026-06-09 (Backend LIVE on Render + Vercel-ready)
 - Deployed the backend via the Render API: found the failing deploy (`update_failed`), diagnosed it from
   logs (RLS `text = uuid`), fixed `current_org()` to return `text`, redeployed → **live**.

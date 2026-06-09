@@ -61,6 +61,10 @@ applies RLS → seeds → serves. Health check: `/v1/health`. Auto-deploys on pu
 | GET    | `/bills/:id`     | one bill + diagnosis + findings |
 | POST   | `/diagnosis`     | stateless: `{ fields: [{key,value}] }` → full diagnosis |
 | POST   | `/bills/:id/diagnose` | re-run + persist diagnosis for a bill |
+| GET    | `/portfolio/totals` | dashboard KPIs (spend, savings, buildings, bills) |
+| GET    | `/portfolio/monthly` | 12-month portfolio spend (₹ lakh) |
+| GET    | `/portfolio/forecast` | 12 actual + 3 projected months |
+| GET    | `/portfolio/recent-bills` | derived recent-bills list |
 
 Tenant is taken from the `x-org-id` header (falls back to the demo org) until
 real auth (JWT) lands at Stage F.

@@ -152,6 +152,10 @@ model Building {
   pf                Float?
   epi               Float?
   savingsInr        Int          @default(0)
+  billsReceived     Int          @default(0)
+  billsExpected     Int          @default(0)
+  // 12-month spend trend in ₹ lakh, aligned to MONTHS (Jul…Jun).
+  trendL            Float[]
   createdAt         DateTime     @default(now())
 
   org       Organisation      @relation(fields: [orgId], references: [id])
