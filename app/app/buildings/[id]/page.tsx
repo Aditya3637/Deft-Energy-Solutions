@@ -40,6 +40,8 @@ export default async function BuildingProfilePage({
   const monthlySpend = b.trendL[b.trendL.length - 1] * 100000;
   const recentBills = await api.portfolio.recentBills();
   const bills = recentBills.filter((r) => r.buildingId === b.id);
+  const analyzed = (await api.bills.listAnalyzed()).filter((x) => x.buildingId === b.id);
+  const recoverableHere = analyzed.reduce((s, x) => s + (x.recoverableInr ?? 0), 0);
 
   const profile: { label: string; value: string }[] = [
     { label: "Type", value: b.type },
@@ -110,6 +112,35 @@ export default async function BuildingProfilePage({
           </CardContent>
         </Card>
       </div>
+
+      {analyzed.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Analyzed bills — savings found</CardTitle>
+            <CardDescription>
+              {formatRupeesCompact(recoverableHere)}/yr recoverable across {analyzed.length} analyzed bill
+              {analyzed.length === 1 ? "" : "s"} for this site.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="divide-y">
+            {analyzed.map((x) => (
+              <Link
+                key={x.id}
+                href="/app/bills"
+                className="flex items-center justify-between gap-4 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-muted/40"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{x.title}</div>
+                  <div className="text-sm text-muted-foreground">{x.discom} · {x.month}</div>
+                </div>
+                <span className="shrink-0 font-semibold text-primary">
+                  {x.recoverableInr ? `${formatRupeesCompact(x.recoverableInr)}/yr` : "—"}
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

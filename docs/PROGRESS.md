@@ -7,6 +7,13 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Core loop — carry savings to dashboard + building views)
+- **The recoverable ₹ now follows the user everywhere** (big-ticket #4 done). `SavedBill` gained
+  `buildingId`; `/app` (dashboard) shows a "Your analyzed bills" card with per-bill recoverable + a
+  running total; `/app/buildings/[id]` shows that site's analyzed bills + site recoverable (filtered by
+  `buildingId`). Live on Vercel SSR (cookie session → signed-in org), fixture on static Pages. Empty states
+  + CTA to `/analyze`. So: analyze → save → it shows on bills, the dashboard, and the building.
+
 ### 2026-06-09 (Backlog sheet + multi-DISCOM customer-angle test)
 - **`docs/TODO.md`** added — a living, fetch-from-anywhere backlog: built ✓, big-ticket focus items, small
   backlog, and a per-module customer-angle test status. Production-grade bar restated (live product, not a pilot).

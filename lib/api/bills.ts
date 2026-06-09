@@ -7,6 +7,7 @@ export const GROUP_ORDER = M.GROUP_ORDER;
 /** A bill the user saved to their workspace, with its diagnosed savings. */
 export type SavedBill = {
   id: string;
+  buildingId: string | null;
   title: string;
   discom: string;
   month: string;
@@ -24,6 +25,7 @@ function billMonth(billDate: string | null): string {
 
 type ServerBill = {
   id: string;
+  buildingId: string | null;
   consumerName: string | null;
   discom: string | null;
   totalAmountDue: number | null;
@@ -33,7 +35,7 @@ type ServerBill = {
 
 /** Demo analyzed bills for the static Pages build (Vercel SSR shows the real ones). */
 const SAVED_FIXTURE: SavedBill[] = [
-  { id: "fx-1", title: "Acme Manufacturing Pvt Ltd", discom: "MSEDCL", month: "Jun 2026", amountInr: 4484210, recoverableInr: 2606000, analyzed: true },
+  { id: "fx-1", buildingId: "acme-bhosari", title: "Acme Manufacturing Pvt Ltd", discom: "MSEDCL", month: "Jun 2026", amountInr: 4484210, recoverableInr: 2606000, analyzed: true },
 ];
 
 /** Bill fields that are text (everything else is sent as a number). */
@@ -89,6 +91,7 @@ export const bills = {
         return rows
           .map((b) => ({
             id: b.id,
+            buildingId: b.buildingId,
             title: b.consumerName ?? "Bill",
             discom: b.discom ?? "—",
             month: billMonth(b.billDate),

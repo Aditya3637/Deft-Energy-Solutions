@@ -37,8 +37,9 @@
 2. **Live vision-OCR validation across DISCOMs:** set `ANTHROPIC_API_KEY` on the backend, run ~7–8 real
    bills per DISCOM end-to-end, measure per-DISCOM accuracy on the dashboard, tune templates. *Blocked on key.*
 3. **Magic-link email delivery** (SES/Resend) + set `AUTH_SECRET`/`APP_URL` → fully self-serve sign-in.
-4. **Carry savings everywhere:** dashboard (`/app`) + building detail (`/app/buildings/[id]`) show the
-   user's saved bills + recoverable ₹ live (currently mock).
+4. ~~**Carry savings everywhere:** dashboard + building detail show the user's saved bills + recoverable ₹.~~
+   ✅ done — both surface `bills.listAnalyzed()` (live on Vercel SSR, fixture on static); building view
+   filters by `buildingId`.
 5. **Stage H harden:** DPDP (consent, retention, export/delete self-service), perf @ 50k bills/mo + 5k MAU,
    full test matrix (unit/integration/E2E/contract/perf/security/a11y), VAPT, error monitoring + logging.
 6. **Remaining integrations (Stage G):** IEX/PXIL prices, smart-meter/AMI, BMS/IoT, WhatsApp/SMS,
