@@ -7,8 +7,18 @@
  */
 
 import { ProviderResult } from "./extract-core";
-import { anthropicConfigured, anthropicModel, extractViaAnthropic } from "./provider-anthropic";
-import { openaiConfigured, openaiModel, extractViaOpenAI } from "./provider-openai";
+import {
+  anthropicConfigured,
+  anthropicModel,
+  extractViaAnthropic,
+  extractViaAnthropicText,
+} from "./provider-anthropic";
+import {
+  openaiConfigured,
+  openaiModel,
+  extractViaOpenAI,
+  extractViaOpenAIText,
+} from "./provider-openai";
 
 export type ProviderName = "anthropic" | "openai";
 
@@ -24,6 +34,17 @@ export function providerModel(): string {
   return providerName() === "openai" ? openaiModel() : anthropicModel();
 }
 
+/** True for providers that can OCR an image/PDF directly (used for fallback). */
+export function providerSupportsVision(): boolean {
+  return providerName() === "anthropic";
+}
+
+/** Vision path — OCR the raw file (PDF or image). */
 export function extractBill(file: { buffer: Buffer; mimetype: string }): Promise<ProviderResult> {
   return providerName() === "openai" ? extractViaOpenAI(file) : extractViaAnthropic(file);
+}
+
+/** Text path — structure already-extracted bill text (digital-PDF text layer). */
+export function extractBillText(text: string): Promise<ProviderResult> {
+  return providerName() === "openai" ? extractViaOpenAIText(text) : extractViaAnthropicText(text);
 }

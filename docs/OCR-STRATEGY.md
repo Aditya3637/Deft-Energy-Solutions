@@ -96,11 +96,14 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
 
 ## De-risking sequence (Stage G)
 
-1. **Digital-PDF text parser + arithmetic validation** — highest accuracy, lowest effort; covers
-   digital-PDF consumers first.
+1. **Digital-PDF text parser + arithmetic validation** ✅ *done* — `pdf-parse` reads the text layer
+   locally (no API/vision), then a cheap text model structures it into the 42 fields; the arithmetic
+   sanity checks validate the result. Covers digital-PDF consumers first, and is the genuinely-free PDF
+   path on the `openai`/Llama provider (which otherwise takes images only). Scanned PDFs (no text layer)
+   fall back to the vision path.
 2. **BBPS / portal fetch** for structured summary data and cross-validation.
-3. **VLM schema extraction** for photo/scan uploads, behind the existing review/correct UI, capturing
-   corrections as training data.
+3. **VLM schema extraction** for photo/scan uploads ✅ *done* (Stage G) — behind the existing
+   review/correct UI; corrections become training data next.
 4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
 5. **Live accuracy dashboard** (SPEC_V2 §7 matrix wired to the gold corpus) — so accuracy is a measured,
    visible number, per DISCOM, not a claim.
@@ -136,7 +139,8 @@ For genuine $0-per-call at volume, **self-host**:
   (paid), **or** self-hosted Llama-Vision once volume justifies a GPU.
 - **Production at best accuracy:** `anthropic` default (Opus), reserving the free path for overflow/dev.
 
-Free OpenAI-compatible hosts take **images, not PDFs** (no server-side PDF rasteriser is bundled — it
-needs a native dep). On the free path, upload a photo/screenshot, or keep `anthropic` for PDFs. Most
-DISCOM-portal PDFs also have a text layer — a digital-PDF text parser (de-risking step 1) will be the
-genuinely-free path for those and is the next addition.
+Free OpenAI-compatible hosts can't OCR a PDF *image* (no server-side rasteriser is bundled — that needs
+a native dep), so a **scanned** PDF on the free path still needs a photo/screenshot or the `anthropic`
+provider. But most DISCOM-portal PDFs are born-digital with a text layer: the **digital-PDF text-parse
+path** (de-risking step 1, now implemented) reads that text locally and structures it via a cheap text
+model — so digital PDFs work on the free `openai`/Llama provider too, at minimal cost.

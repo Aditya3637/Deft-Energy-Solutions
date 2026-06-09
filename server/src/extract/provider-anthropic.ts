@@ -57,22 +57,19 @@ type AnthropicResponse = {
   error?: { type: string; message: string };
 };
 
-export async function extractViaAnthropic(file: {
-  buffer: Buffer;
-  mimetype: string;
-}): Promise<ProviderResult> {
+/** Shared call: forced tool use over whatever user content blocks we pass. */
+async function runAnthropic(content: unknown[]): Promise<ProviderResult> {
   if (!anthropicConfigured()) {
     throw new ExtractionError("Anthropic provider not configured (ANTHROPIC_API_KEY unset).", 503);
   }
 
-  const block = sourceBlock(file.mimetype, file.buffer.toString("base64"));
   const body = JSON.stringify({
     model: anthropicModel(),
     max_tokens: 4096,
     system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     tools: [TOOL],
     tool_choice: { type: "tool", name: TOOL_NAME },
-    messages: [{ role: "user", content: [block, { type: "text", text: USER_TEXT }] }],
+    messages: [{ role: "user", content }],
   });
 
   const json = await withRetry<AnthropicResponse>(async () => {
@@ -111,4 +108,20 @@ export async function extractViaAnthropic(file: {
     fields: coerceRawFields(toolBlock.input?.fields),
     model: json.model ?? anthropicModel(),
   };
+}
+
+/** Vision path: send the PDF/image to Claude directly. */
+export function extractViaAnthropic(file: {
+  buffer: Buffer;
+  mimetype: string;
+}): Promise<ProviderResult> {
+  const block = sourceBlock(file.mimetype, file.buffer.toString("base64"));
+  return runAnthropic([block, { type: "text", text: USER_TEXT }]);
+}
+
+/** Text path: structure already-extracted bill text (digital-PDF text layer). */
+export function extractViaAnthropicText(text: string): Promise<ProviderResult> {
+  return runAnthropic([
+    { type: "text", text: `${USER_TEXT}\n\nExtracted bill text:\n"""\n${text}\n"""` },
+  ]);
 }

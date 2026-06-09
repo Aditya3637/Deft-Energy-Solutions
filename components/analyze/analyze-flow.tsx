@@ -68,7 +68,13 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
       setStep("extracting");
       const out = await extract.fromFile(file);
       setFields(out.fields.map((f) => ({ ...f })));
-      setNotice(out.live ? null : out.note ?? null);
+      setNotice(
+        !out.live
+          ? out.note ?? null
+          : out.source === "pdf-text"
+            ? "Read directly from the PDF's text layer — no OCR needed."
+            : null,
+      );
       setStep("review");
     },
     [],

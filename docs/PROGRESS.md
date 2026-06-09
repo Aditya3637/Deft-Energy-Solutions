@@ -7,6 +7,20 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G++ — digital-PDF text-parse path)
+- **Free path for born-digital PDFs.** `server/src/extract/pdf-text.ts` reads the PDF text layer locally
+  with `pdf-parse` (pure JS, no native deps, no API). If the layer is usable (`hasUsableText`: ≥120
+  non-space chars + digits), the service structures the **text** via the configured provider's new text
+  path (`extractBillText`) instead of vision — far cheaper, and the only PDF route the free `openai`/Llama
+  provider has (it otherwise takes images only).
+- **Routing** (`extract.service.ts`): PDF → try text layer → structure text (`source:"pdf-text"`); scanned
+  PDF (no text) or image → vision (`source:"vision"`). If a text parse yields < 6 fields and the provider
+  can do vision (Anthropic), it falls back to OCR-ing the PDF. Providers refactored to share one call with
+  two entry points (vision + text): `extractViaAnthropicText` / `extractViaOpenAIText`.
+- **UI:** when a bill is read from the text layer, the review screen notes "Read directly from the PDF's
+  text layer — no OCR needed." `pdf-parse` added to server deps; typed via `src/types/pdf-parse.d.ts`
+  (inner-module import sidesteps its debug harness). Marks de-risking step 1 done (`docs/OCR-STRATEGY.md`).
+
 ### 2026-06-09 (Stage G+ — sanity checks + pluggable providers)
 - **Arithmetic sanity-check pass on the review screen** (`lib/bill-checks.ts` → `SanityChecks` card).
   Re-runs live as the user edits. No-false-positive discipline: each check fires only when its inputs are

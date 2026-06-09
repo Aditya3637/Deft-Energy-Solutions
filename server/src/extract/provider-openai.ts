@@ -72,39 +72,22 @@ function parseFields(content: string): unknown {
   throw new ExtractionError("The model did not return parseable JSON. Try a different EXTRACT_MODEL.");
 }
 
-export async function extractViaOpenAI(file: {
-  buffer: Buffer;
-  mimetype: string;
-}): Promise<ProviderResult> {
+/** Shared call: chat-completions over the given user message content. */
+async function runOpenAI(userContent: unknown): Promise<ProviderResult> {
   if (!openaiConfigured()) {
     throw new ExtractionError(
       "OpenAI-compatible provider not configured (set EXTRACT_BASE_URL and EXTRACT_MODEL).",
       503,
     );
   }
-  if (file.mimetype === "application/pdf") {
-    throw new UnsupportedMediaError(
-      "application/pdf (this provider accepts images only — upload a photo/screenshot, or set EXTRACT_PROVIDER=anthropic for PDFs)",
-    );
-  }
-  if (!SUPPORTED_IMAGE.has(file.mimetype)) {
-    throw new UnsupportedMediaError(file.mimetype);
-  }
 
-  const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
   const payload: Record<string, unknown> = {
     model: openaiModel(),
     max_tokens: 4096,
     temperature: 0,
     messages: [
       { role: "system", content: `${SYSTEM_PROMPT}\n\n${JSON_INSTRUCTION}` },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: USER_TEXT },
-          { type: "image_url", image_url: { url: dataUri } },
-        ],
-      },
+      { role: "user", content: userContent },
     ],
   };
   if (process.env.EXTRACT_JSON_MODE?.trim()) {
@@ -134,7 +117,32 @@ export async function extractViaOpenAI(file: {
 
   const content = json.choices?.[0]?.message?.content;
   if (!content) {
-    throw new ExtractionError("The model returned no content. The image may be unreadable.");
+    throw new ExtractionError("The model returned no content. The input may be unreadable.");
   }
   return { fields: coerceRawFields(parseFields(content)), model: openaiModel() };
+}
+
+/** Vision path: send the image to the model (PDFs not supported here). */
+export function extractViaOpenAI(file: {
+  buffer: Buffer;
+  mimetype: string;
+}): Promise<ProviderResult> {
+  if (file.mimetype === "application/pdf") {
+    throw new UnsupportedMediaError(
+      "application/pdf (this provider only OCRs images — upload a photo/screenshot, or set EXTRACT_PROVIDER=anthropic for scanned PDFs)",
+    );
+  }
+  if (!SUPPORTED_IMAGE.has(file.mimetype)) {
+    throw new UnsupportedMediaError(file.mimetype);
+  }
+  const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+  return runOpenAI([
+    { type: "text", text: USER_TEXT },
+    { type: "image_url", image_url: { url: dataUri } },
+  ]);
+}
+
+/** Text path: structure already-extracted bill text — works for digital PDFs. */
+export function extractViaOpenAIText(text: string): Promise<ProviderResult> {
+  return runOpenAI(`${USER_TEXT}\n\nExtracted bill text:\n"""\n${text}\n"""`);
 }

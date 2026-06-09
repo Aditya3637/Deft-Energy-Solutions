@@ -7,11 +7,13 @@ const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 export type ExtractOutcome = {
   fields: M.ExtractedField[];
-  /** true → real OCR from the backend; false → sample fallback. */
+  /** true → real extraction from the backend; false → sample fallback. */
   live: boolean;
   model?: string;
   found?: number;
   total?: number;
+  /** "pdf-text" → read the PDF's text layer (free); "vision" → OCR. */
+  source?: "pdf-text" | "vision";
   /** Set when we fell back to the sample (no backend / extraction failed). */
   note?: string;
 };
@@ -22,7 +24,7 @@ type ServerExtract = {
   found: number;
   total: number;
   lowConfidence: string[];
-  source: string;
+  source: "pdf-text" | "vision";
 };
 
 function sample(note?: string): ExtractOutcome {
@@ -70,6 +72,7 @@ export const extract = {
         model: data.model,
         found: data.found,
         total: data.total,
+        source: data.source,
       };
     } catch {
       return sample("Couldn't reach the extraction service — showing a sample bill.");
