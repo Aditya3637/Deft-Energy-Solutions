@@ -12,13 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
-import { BUILDINGS } from "@/lib/mock/portfolio";
-import { BADGES, REWARDS } from "@/lib/mock/ecosystem";
+import { api } from "@/lib/api";
 import { formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Rewards" };
 
-export default function LeaderboardPage() {
+export default async function LeaderboardPage() {
+  const [BUILDINGS, BADGES, REWARDS] = await Promise.all([
+    api.portfolio.buildings(),
+    api.ecosystem.badges(),
+    api.ecosystem.rewards(),
+  ]);
   // Lower EPI ranks higher; points scale with savings captured.
   const ranked = [...BUILDINGS]
     .sort((a, b) => a.epi - b.epi)

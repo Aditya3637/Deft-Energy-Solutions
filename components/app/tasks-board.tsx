@@ -5,12 +5,11 @@ import { ArrowLeft, ArrowRight, ListChecks, Clock, CheckCircle2 } from "lucide-r
 
 import { cn } from "@/lib/utils";
 import {
-  TASKS,
   TASK_COLUMNS,
   type Task,
   type TaskStatus,
   type TaskPriority,
-} from "@/lib/mock/tasks";
+} from "@/lib/api/tasks";
 import { formatRupeesCompact } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +33,8 @@ const priorityVariant: Record<TaskPriority, "destructive" | "warning" | "seconda
 };
 const sourceVariant = { Diagnosis: "default", Alert: "warning", Audit: "secondary" } as const;
 
-export function TasksBoard() {
-  const [tasks, setTasks] = React.useState<Task[]>(() => TASKS.map((t) => ({ ...t })));
+export function TasksBoard({ initialTasks }: { initialTasks: Task[] }) {
+  const [tasks, setTasks] = React.useState<Task[]>(() => initialTasks.map((t) => ({ ...t })));
 
   const move = (id: string, dir: 1 | -1) =>
     setTasks((prev) =>

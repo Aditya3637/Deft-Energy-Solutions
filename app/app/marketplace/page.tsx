@@ -11,14 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
-import { VENDORS, RFQS, REVERSE_AUCTION } from "@/lib/mock/ecosystem";
+import { api } from "@/lib/api";
 import { formatRupees, formatRupeesCompact } from "@/lib/format";
 
 export const metadata = { title: "Marketplace" };
 
 const rfqVariant = { open: "secondary", evaluating: "warning", awarded: "success" } as const;
 
-export default function MarketplacePage() {
+export default async function MarketplacePage() {
+  const [VENDORS, RFQS, REVERSE_AUCTION] = await Promise.all([
+    api.ecosystem.vendors(),
+    api.ecosystem.rfqs(),
+    api.ecosystem.reverseAuction(),
+  ]);
   const lowestTco = Math.min(...REVERSE_AUCTION.bids.map((b) => b.tcoINR));
 
   return (

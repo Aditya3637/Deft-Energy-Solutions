@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SyncStatus } from "@/components/field/sync-status";
 import { StatCard } from "@/components/app/stat-card";
-import { COLLECTION_STOPS, type Stop } from "@/lib/mock/field";
+import { type Stop } from "@/lib/api/field";
 import { formatRupees, formatRupeesCompact } from "@/lib/format";
 
-export function CollectionRoute() {
+export function CollectionRoute({ initialStops }: { initialStops: Stop[] }) {
   const [stops, setStops] = React.useState<Stop[]>(() =>
-    COLLECTION_STOPS.map((s) => ({ ...s })),
+    initialStops.map((s) => ({ ...s })),
   );
 
   const collect = (id: string) =>

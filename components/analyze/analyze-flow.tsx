@@ -17,11 +17,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import {
-  SAMPLE_FIELDS,
-  GROUP_ORDER,
-  type ExtractedField,
-} from "@/lib/mock/bill";
+import { GROUP_ORDER, type ExtractedField } from "@/lib/api/bills";
 import { fullDiagnose } from "@/lib/diagnosis";
 import { TOTAL_CHECKS, CATEGORIES, DATA_NEED_LABELS } from "@/lib/loss-taxonomy";
 import {
@@ -51,17 +47,17 @@ const EXTRACT_MESSAGES = [
   "Checking power factor and time-of-day…",
 ];
 
-export function AnalyzeFlow() {
+export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }) {
   const [step, setStep] = React.useState<Step>("upload");
   const [fields, setFields] = React.useState<ExtractedField[]>(() =>
-    SAMPLE_FIELDS.map((f) => ({ ...f })),
+    sampleFields.map((f) => ({ ...f })),
   );
 
   const start = React.useCallback(() => setStep("extracting"), []);
   const reset = React.useCallback(() => {
-    setFields(SAMPLE_FIELDS.map((f) => ({ ...f })));
+    setFields(sampleFields.map((f) => ({ ...f })));
     setStep("upload");
-  }, []);
+  }, [sampleFields]);
 
   const updateField = React.useCallback((key: string, value: string) => {
     setFields((prev) =>

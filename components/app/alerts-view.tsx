@@ -5,12 +5,10 @@ import { Bell, BellRing, CheckCircle2, AlertTriangle, Info, AlertOctagon } from 
 
 import { cn } from "@/lib/utils";
 import {
-  ALERTS,
-  ALERT_RULES,
   type AlertInstance,
   type AlertRule,
   type AlertSeverity,
-} from "@/lib/mock/alerts";
+} from "@/lib/api/alerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,12 +35,18 @@ const severityIcon = {
   info: Info,
 } as const;
 
-export function AlertsView() {
+export function AlertsView({
+  initialAlerts,
+  initialRules,
+}: {
+  initialAlerts: AlertInstance[];
+  initialRules: AlertRule[];
+}) {
   const [alerts, setAlerts] = React.useState<AlertInstance[]>(() =>
-    ALERTS.map((a) => ({ ...a })),
+    initialAlerts.map((a) => ({ ...a })),
   );
   const [rules, setRules] = React.useState<AlertRule[]>(() =>
-    ALERT_RULES.map((r) => ({ ...r })),
+    initialRules.map((r) => ({ ...r })),
   );
 
   const setStatus = (id: string, status: AlertInstance["status"]) =>

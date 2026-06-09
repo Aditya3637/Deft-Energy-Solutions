@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
-import { COURSES } from "@/lib/mock/ecosystem";
+import { api } from "@/lib/api";
 
 export const metadata = { title: "Training" };
 
-export default function TrainingPage() {
+export default async function TrainingPage() {
+  const COURSES = await api.ecosystem.courses();
   const completed = COURSES.filter((c) => c.progressPct === 100).length;
   const inProgress = COURSES.filter((c) => c.progressPct > 0 && c.progressPct < 100).length;
 

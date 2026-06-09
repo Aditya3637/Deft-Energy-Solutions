@@ -13,14 +13,15 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import { GHG_SCOPES } from "@/lib/mock/energy-markets";
+import { api } from "@/lib/api";
 import { formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Carbon" };
 
 const scopeIcon = [Factory, Zap, Truck];
 
-export default function CarbonPage() {
+export default async function CarbonPage() {
+  const GHG_SCOPES = await api.markets.ghgScopes();
   const total = GHG_SCOPES.reduce((s, sc) => s + sc.tco2e, 0);
 
   return (

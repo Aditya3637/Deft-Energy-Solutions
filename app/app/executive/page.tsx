@@ -21,24 +21,25 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import { portfolioTotals, portfolioMonthlyL, MONTHS } from "@/lib/mock/portfolio";
-import {
-  CARBON_TOTAL,
-  ESG,
-  NET_ZERO,
-  OBLIGATIONS,
-  RISKS,
-  EXEC_OPPORTUNITIES,
-} from "@/lib/mock/sustainability";
+import { api, MONTHS } from "@/lib/api";
 import { formatRupeesCompact, formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Executive summary" };
 
 const severityVariant = { high: "destructive", medium: "warning", low: "secondary" } as const;
 
-export default function ExecutivePage() {
-  const t = portfolioTotals();
-  const monthly = portfolioMonthlyL();
+export default async function ExecutivePage() {
+  const [t, monthly, CARBON_TOTAL, ESG, NET_ZERO, OBLIGATIONS, RISKS, EXEC_OPPORTUNITIES] =
+    await Promise.all([
+      api.portfolio.totals(),
+      api.portfolio.monthly(),
+      api.sustainability.carbonTotal(),
+      api.sustainability.esg(),
+      api.sustainability.netZero(),
+      api.sustainability.obligations(),
+      api.sustainability.risks(),
+      api.sustainability.opportunities(),
+    ]);
   const compliant = OBLIGATIONS.filter((o) => o.status === "compliant").length;
   const compliancePct = Math.round((compliant / OBLIGATIONS.length) * 100);
 

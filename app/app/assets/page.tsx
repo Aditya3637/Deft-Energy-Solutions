@@ -11,12 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
-import { BESS, MICROGRID, VPP } from "@/lib/mock/energy-markets";
+import { api } from "@/lib/api";
 import { formatRupeesCompact, formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Assets" };
 
-export default function AssetsPage() {
+export default async function AssetsPage() {
+  const [BESS, MICROGRID, VPP] = await Promise.all([
+    api.markets.bess(),
+    api.markets.microgrid(),
+    api.markets.vpp(),
+  ]);
   const bessAnnual = BESS.demandSavingINR + BESS.arbitrageSavingINR;
 
   return (

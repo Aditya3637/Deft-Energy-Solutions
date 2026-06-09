@@ -13,12 +13,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import { OA, oaEconomics, IEX, CARBON_CREDITS } from "@/lib/mock/energy-markets";
+import { api, oaEconomics } from "@/lib/api";
 import { formatRupees, formatRupeesCompact, formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Markets" };
 
-export default function MarketsPage() {
+export default async function MarketsPage() {
+  const [OA, IEX, CARBON_CREDITS] = await Promise.all([
+    api.markets.openAccess(),
+    api.markets.iex(),
+    api.markets.carbonCredits(),
+  ]);
   const oa = oaEconomics();
   const creditValue = CARBON_CREDITS.held * CARBON_CREDITS.ccPriceINR;
 

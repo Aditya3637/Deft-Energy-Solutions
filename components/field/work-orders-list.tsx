@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SyncStatus } from "@/components/field/sync-status";
-import { WORK_ORDERS, type WoStatus, type WoPriority } from "@/lib/mock/field";
+import { type WorkOrder, type WoStatus, type WoPriority } from "@/lib/api/field";
 
 const statusLabel: Record<WoStatus, string> = {
   open: "Open",
@@ -24,12 +24,12 @@ const priorityVariant: Record<WoPriority, "destructive" | "warning" | "secondary
   low: "secondary",
 };
 
-export function WorkOrdersList() {
+export function WorkOrdersList({ workOrders }: { workOrders: WorkOrder[] }) {
   return (
     <div className="space-y-4">
       <SyncStatus pending={1} />
       <div className="space-y-3">
-        {WORK_ORDERS.map((w) => {
+        {workOrders.map((w) => {
           const progress = w.checklist.filter((c) => c.done).length;
           return (
             <Link key={w.id} href={`/field/work-orders/${w.id}`}>

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Mail, MessageSquare, Smartphone, Bell } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { LANGUAGES } from "@/lib/mock/ecosystem";
+import { LANGUAGES } from "@/lib/api/ecosystem";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";

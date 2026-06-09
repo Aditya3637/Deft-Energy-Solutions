@@ -5,14 +5,18 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** **Stage B (all screens B1–B7) ✅ COMPLETE** + hardened 58-check engine. No stubs left.
+- **Active stage:** Stage B ✅ · **Stage D mock-API seam ✅ DONE** (every screen reads data through `lib/api/*`)
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage C/D — interaction polish pass (a11y/keyboard audit, scroll-restoration, route
-  transitions, i18n string catalogue) and formalise the **Stage D mock-API seam** (`lib/api/*`) so the
-  scattered `lib/mock/*` modules are read through typed client functions ready to swap for real endpoints
-  at Stage F. Then Stage E (backend). (OCR remains Stage G, clearly simulated.)
+- **The seam:** `lib/api/*` exposes async, typed data functions (`api.portfolio.buildings()`, etc.),
+  fixtures today; Stage F swaps the bodies to real endpoints behind identical signatures. Server pages
+  `await` them; client components receive initial data as props from their server wrappers. **No screen
+  imports `lib/mock/*` directly** — only the api layer does. Pure logic (diagnosis, ROI, formatting) stays
+  in lib/* (runs client-side regardless of backend).
+- **Next action:** Stage C interaction-polish pass (a11y/keyboard audit, scroll restoration, route
+  transitions, i18n string catalogue), then **Stage E** (NestJS backend + 61-table schema) → F → G → H.
+  (OCR remains Stage G, clearly simulated.)
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
   `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
   `/app/carbon` · `/app/markets` · `/app/assets` · `/app/marketplace` · `/app/training` ·
@@ -38,6 +42,16 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage D — mock-API seam)
+- Built `lib/api/*` (portfolio, tasks, alerts, field, sustainability, capex, markets, ecosystem, bills) +
+  an aggregating `api` object. Async typed functions returning fixtures today, swap-ready for Stage F.
+- Migrated **every** screen to read through the seam: ~15 server pages now `await api.*`; the interactive
+  client components (analyze, tasks, alerts, capex, settings, field × 5) receive initial data as props
+  from their server-page wrappers. Verified no `app/`/`components/` file imports `lib/mock/*` anymore.
+- Boundary: data records → `api.*`; pure logic (diagnosis engine, ROI math, formatting, loss taxonomy)
+  stays in `lib/*`. Client components import runtime constants from the specific `lib/api/<domain>`
+  submodule (not the index) to keep their bundles lean.
 
 ### 2026-06-09 (Stage B7 — Stage B complete)
 - **Stage B7 complete — ecosystem & growth.** From `lib/mock/ecosystem.ts`:

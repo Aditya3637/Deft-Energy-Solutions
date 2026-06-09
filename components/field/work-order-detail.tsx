@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SyncStatus } from "@/components/field/sync-status";
-import type { WorkOrder } from "@/lib/mock/field";
+import type { WorkOrder } from "@/lib/api/field";
 
 export function WorkOrderDetail({ wo }: { wo: WorkOrder }) {
   const [items, setItems] = React.useState(() => wo.checklist.map((c) => ({ ...c })));

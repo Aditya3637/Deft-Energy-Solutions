@@ -10,13 +10,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app/page-header";
-import { BUILDINGS, portfolioTotals } from "@/lib/mock/portfolio";
+import { api } from "@/lib/api";
 import { formatRupeesCompact, formatIndianNumber } from "@/lib/format";
 
 export const metadata = { title: "Buildings" };
 
-export default function BuildingsPage() {
-  const t = portfolioTotals();
+export default async function BuildingsPage() {
+  const [t, BUILDINGS] = await Promise.all([
+    api.portfolio.totals(),
+    api.portfolio.buildings(),
+  ]);
 
   return (
     <div className="space-y-6">

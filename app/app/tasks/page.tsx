@@ -1,9 +1,11 @@
+import { api } from "@/lib/api";
 import { PageHeader } from "@/components/app/page-header";
 import { TasksBoard } from "@/components/app/tasks-board";
 
 export const metadata = { title: "Tasks" };
 
-export default function TasksPage() {
+export default async function TasksPage() {
+  const tasks = await api.tasks.list();
   return (
     <div className="space-y-6">
       <PageHeader
@@ -11,7 +13,7 @@ export default function TasksPage() {
         description="Actions auto-created from diagnoses, alerts and audits."
         action={{ label: "Analyze a bill", href: "/analyze" }}
       />
-      <TasksBoard />
+      <TasksBoard initialTasks={tasks} />
     </div>
   );
 }

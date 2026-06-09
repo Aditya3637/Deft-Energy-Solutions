@@ -14,21 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import {
-  BUILDINGS,
-  MONTHS,
-  getBuilding,
-  RECENT_BILLS,
-} from "@/lib/mock/portfolio";
+import { api, MONTHS } from "@/lib/api";
 import { formatRupees, formatRupeesCompact, formatIndianNumber, formatUnit } from "@/lib/format";
 
-export function generateStaticParams() {
-  return BUILDINGS.map((b) => ({ id: b.id }));
+export async function generateStaticParams() {
+  const buildings = await api.portfolio.buildings();
+  return buildings.map((b) => ({ id: b.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const b = getBuilding(id);
+  const b = await api.portfolio.building(id);
   return { title: b ? b.name : "Building" };
 }
 
@@ -38,11 +34,12 @@ export default async function BuildingProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const b = getBuilding(id);
+  const b = await api.portfolio.building(id);
   if (!b) notFound();
 
   const monthlySpend = b.trendL[b.trendL.length - 1] * 100000;
-  const bills = RECENT_BILLS.filter((r) => r.buildingId === b.id);
+  const recentBills = await api.portfolio.recentBills();
+  const bills = recentBills.filter((r) => r.buildingId === b.id);
 
   const profile: { label: string; value: string }[] = [
     { label: "Type", value: b.type },

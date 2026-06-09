@@ -8,19 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SyncStatus } from "@/components/field/sync-status";
-import {
-  AUDIT_META,
-  AUDIT_SECTIONS,
-  AUDIT_MEASUREMENTS,
-} from "@/lib/mock/field";
+import { AUDIT_META, AUDIT_SECTIONS, type Measurement } from "@/lib/api/field";
 
-export function AuditCapture() {
+export function AuditCapture({ measurements }: { measurements: Measurement[] }) {
   const [values, setValues] = React.useState<Record<string, string>>({});
   const [photos, setPhotos] = React.useState(0);
   const [location, setLocation] = React.useState<string | null>(null);
 
-  const filled = AUDIT_MEASUREMENTS.filter((m) => (values[m.id] ?? "").trim() !== "").length;
-  const total = AUDIT_MEASUREMENTS.length;
+  const filled = measurements.filter((m) => (values[m.id] ?? "").trim() !== "").length;
+  const total = measurements.length;
 
   const setValue = (id: string, v: string) =>
     setValues((prev) => ({ ...prev, [id]: v }));
@@ -52,7 +48,7 @@ export function AuditCapture() {
       </Card>
 
       {AUDIT_SECTIONS.map((section) => {
-        const ms = AUDIT_MEASUREMENTS.filter((m) => m.section === section);
+        const ms = measurements.filter((m) => m.section === section);
         return (
           <Card key={section}>
             <CardHeader className="pb-3">

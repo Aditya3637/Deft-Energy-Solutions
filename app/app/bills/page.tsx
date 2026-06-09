@@ -20,13 +20,7 @@ import {
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import {
-  RECENT_BILLS,
-  MONTHS,
-  portfolioMonthlyL,
-  TOTAL_BILLS_TRACKED,
-  type RecentBill,
-} from "@/lib/mock/portfolio";
+import { api, MONTHS, TOTAL_BILLS_TRACKED, type RecentBill } from "@/lib/api";
 import { formatRupees, formatRupeesCompact, formatUnit } from "@/lib/format";
 
 export const metadata = { title: "Bills" };
@@ -37,13 +31,15 @@ const statusVariant: Record<RecentBill["status"], "success" | "warning" | "destr
   Anomaly: "destructive",
 };
 
-export default function BillsPage() {
-  const monthly = portfolioMonthlyL();
-  const anomalies = RECENT_BILLS.filter((b) => b.status === "Anomaly").length;
-  const totalBilledThisMonth = RECENT_BILLS.filter((b) => b.month === "May 2026").reduce(
-    (s, b) => s + b.amountINR,
-    0,
-  );
+export default async function BillsPage() {
+  const [monthly, recentBills] = await Promise.all([
+    api.portfolio.monthly(),
+    api.portfolio.recentBills(),
+  ]);
+  const anomalies = recentBills.filter((b) => b.status === "Anomaly").length;
+  const totalBilledThisMonth = recentBills
+    .filter((b) => b.month === "May 2026")
+    .reduce((s, b) => s + b.amountINR, 0);
 
   return (
     <div className="space-y-6">
@@ -93,7 +89,7 @@ export default function BillsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {RECENT_BILLS.map((b) => (
+                {recentBills.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="pl-6 font-medium">
                       <Link href={`/app/buildings/${b.buildingId}`} className="hover:underline">
@@ -119,7 +115,7 @@ export default function BillsPage() {
           </div>
           <div className="flex items-center justify-between border-t px-6 py-3 text-sm text-muted-foreground">
             <span>
-              Showing {RECENT_BILLS.length} of{" "}
+              Showing {recentBills.length} of{" "}
               {TOTAL_BILLS_TRACKED.toLocaleString("en-IN")}
             </span>
             <span className="text-xs">Pagination wired to the API at Stage F</span>

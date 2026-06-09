@@ -12,20 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
-import {
-  BUILDINGS,
-  MONTHS,
-  portfolioMonthlyL,
-  portfolioTotals,
-} from "@/lib/mock/portfolio";
+import { api, MONTHS } from "@/lib/api";
 import { formatRupeesCompact } from "@/lib/format";
 
 export const metadata = { title: "Dashboard" };
 
-export default function DashboardPage() {
-  const t = portfolioTotals();
-  const monthly = portfolioMonthlyL();
-  const topBuildings = [...BUILDINGS]
+export default async function DashboardPage() {
+  const [t, monthly, buildings] = await Promise.all([
+    api.portfolio.totals(),
+    api.portfolio.monthly(),
+    api.portfolio.buildings(),
+  ]);
+  const topBuildings = [...buildings]
     .sort((a, b) => b.savingsINR - a.savingsINR)
     .slice(0, 3);
   const billsPending = t.billsExpected - t.billsReceived;

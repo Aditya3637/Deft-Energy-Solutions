@@ -12,20 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart, type BarDatum } from "@/components/charts/bar-chart";
-import {
-  BUILDINGS,
-  MONTHS,
-  BUDGET_L,
-  forecastL,
-  portfolioMonthlyL,
-} from "@/lib/mock/portfolio";
+import { api, MONTHS, BUDGET_L } from "@/lib/api";
 import { formatRupeesCompact } from "@/lib/format";
 
 export const metadata = { title: "Analytics" };
 
-export default function AnalyticsPage() {
-  const monthly = portfolioMonthlyL();
-  const forecast = forecastL();
+export default async function AnalyticsPage() {
+  const [monthly, forecast, BUILDINGS] = await Promise.all([
+    api.portfolio.monthly(),
+    api.portfolio.forecast(),
+    api.portfolio.buildings(),
+  ]);
 
   const forecastData: BarDatum[] = forecast.map((p) => ({
     label: p.label,

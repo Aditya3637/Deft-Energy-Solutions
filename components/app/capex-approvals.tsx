@@ -5,12 +5,11 @@ import { Check, X, IndianRupee, Clock, CheckCircle2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
-  CAPEX_REQUESTS,
   STAGE_FLOW,
   STAGE_LABELS,
   type CapexRequest,
   type Stage,
-} from "@/lib/mock/capex";
+} from "@/lib/api/capex";
 import { formatRupeesCompact } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +18,9 @@ import { StatCard } from "@/components/app/stat-card";
 
 const PIPELINE: Stage[] = ["fm", "em", "cfo", "board"];
 
-export function CapexApprovals() {
+export function CapexApprovals({ initialRequests }: { initialRequests: CapexRequest[] }) {
   const [reqs, setReqs] = React.useState<CapexRequest[]>(() =>
-    CAPEX_REQUESTS.map((r) => ({ ...r })),
+    initialRequests.map((r) => ({ ...r })),
   );
 
   const advance = (id: string) =>

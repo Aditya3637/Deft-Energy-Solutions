@@ -7,12 +7,18 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SyncStatus } from "@/components/field/sync-status";
-import { WORK_ORDERS, COLLECTION_STOPS } from "@/lib/mock/field";
+import type { WorkOrder, Stop } from "@/lib/api/field";
 import { formatRupeesCompact } from "@/lib/format";
 
-export function FieldHome() {
-  const openWo = WORK_ORDERS.filter((w) => w.status !== "done").length;
-  const pendingStops = COLLECTION_STOPS.filter((s) => s.status === "pending");
+export function FieldHome({
+  workOrders,
+  stops,
+}: {
+  workOrders: WorkOrder[];
+  stops: Stop[];
+}) {
+  const openWo = workOrders.filter((w) => w.status !== "done").length;
+  const pendingStops = stops.filter((s) => s.status === "pending");
   const toCollect = pendingStops.reduce((s, x) => s + x.amountINR, 0);
 
   const tiles: {
@@ -59,7 +65,8 @@ export function FieldHome() {
         <h2 className="mb-2 text-sm font-semibold">Up next</h2>
         <Card>
           <CardContent className="divide-y p-0">
-            {WORK_ORDERS.filter((w) => w.status !== "done")
+            {workOrders
+              .filter((w) => w.status !== "done")
               .slice(0, 3)
               .map((w) => (
                 <Link

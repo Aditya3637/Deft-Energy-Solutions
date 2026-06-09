@@ -20,12 +20,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
-import {
-  OBLIGATIONS,
-  BRSR_SECTIONS,
-  ESG,
-  type ComplianceStatus,
-} from "@/lib/mock/sustainability";
+import { api, type ComplianceStatus } from "@/lib/api";
 
 export const metadata = { title: "Compliance" };
 
@@ -50,7 +45,12 @@ function Bar({ pct }: { pct: number }) {
   );
 }
 
-export default function CompliancePage() {
+export default async function CompliancePage() {
+  const [OBLIGATIONS, BRSR_SECTIONS, ESG] = await Promise.all([
+    api.sustainability.obligations(),
+    api.sustainability.brsrSections(),
+    api.sustainability.esg(),
+  ]);
   const compliant = OBLIGATIONS.filter((o) => o.status === "compliant").length;
   const compliancePct = Math.round((compliant / OBLIGATIONS.length) * 100);
   const overdue = OBLIGATIONS.filter((o) => o.status === "overdue").length;
