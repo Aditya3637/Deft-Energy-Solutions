@@ -41,6 +41,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/collections-check.ts
       - name: Auth JWT invariants
         run: npx ts-node --transpile-only scripts/auth-check.ts
+      - name: Multi-DISCOM persona test (diagnosis)
+        run: npx ts-node --transpile-only scripts/persona-discom-check.ts
 
   docker:
     runs-on: ubuntu-latest

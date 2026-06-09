@@ -7,6 +7,17 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Backlog sheet + multi-DISCOM customer-angle test)
+- **`docs/TODO.md`** added — a living, fetch-from-anywhere backlog: built ✓, big-ticket focus items, small
+  backlog, and a per-module customer-angle test status. Production-grade bar restated (live product, not a pilot).
+- **Multi-DISCOM persona test** (`server/scripts/persona-discom-check.ts`, in CI + `npm run persona:check`):
+  persona "Bharat Multi-Site Pvt Ltd" with 8 sites on 8 DISCOMs (MSEDCL/BESCOM/TANGEDCO/TPDDL/BSES/Adani/
+  UPPCL/TSSPDCL), bills reconstructed from real per-DISCOM formats. Asserts production guarantees per bill:
+  all 58 checks run, sane ₹ (≥0, finite, no NaN), and DISCOM-specific no-false-positives (floor-billing not
+  flagged, arrears not counted as savings, no false ToD/open-access, PF-penalty/demand-exceedance caught).
+- **Honest:** this is the deterministic *engine* test grounded in real formats; live vision-OCR on real PDFs
+  needs the backend key (big-ticket #2 in TODO) — not faked.
+
 ### 2026-06-09 (Stage H — SSR cookie session: signed-in users see their own org)
 - **The session token is now mirrored to a cookie**, so Vercel **server-rendered** pages are scoped to the
   signed-in org (not just client-side actions). `setSessionToken`/`clearSessionToken` write/expire a
