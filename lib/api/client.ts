@@ -20,6 +20,14 @@ export function isApiConfigured(): boolean {
   return getApiBase().length > 0;
 }
 
+/** True only when rendering server-side on Vercel with an API URL configured. */
+export function liveServer(): boolean {
+  return !!process.env.VERCEL && isApiConfigured();
+}
+
+/** Per-request (uncached) fetch options for live SSR reads. */
+export const NO_STORE = { cache: "no-store" as const };
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const base = getApiBase();
   if (!base) throw new Error("API not configured (NEXT_PUBLIC_API_URL unset)");

@@ -59,6 +59,15 @@
 
 ## Log
 
+### 2026-06-09 (Backend parity — tasks + alerts)
+- Backend: `tasks` module (`GET /v1/tasks`) and `alerts` module (`GET /v1/alerts`, `/v1/alerts/rules`),
+  RLS-scoped. Seed upserts the 9 demo tasks, 6 alert rules, 6 alert instances (matching the fixtures;
+  enum-cased; alert `triggered` as real dates).
+- Frontend: `api.tasks.list` / `api.alerts.{list,rules}` live-fetch on Vercel SSR (shared `liveServer()` +
+  `NO_STORE` in client.ts), mapping server enum casing → frontend lowercase/Title strings and ISO →
+  DD-MM-YYYY; fixtures fallback. The Tasks/Alerts server pages already pass this to their client components,
+  so the Kanban/alerts views render live on Vercel with no edit. Reads only (mutations stay client-local).
+
 ### 2026-06-09 (Frontend portfolio live-fetch)
 - `lib/api/portfolio.*` now fetch the live backend when rendering **server-side on Vercel**
   (`process.env.VERCEL` + API configured), mapping the server Building shape → frontend Building; otherwise

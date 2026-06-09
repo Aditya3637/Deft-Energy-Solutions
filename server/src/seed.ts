@@ -19,6 +19,42 @@ const BUILDINGS = [
   { id: "techpark-c", name: "TechPark Block C", city: "Hyderabad", type: "COMMERCIAL", discom: "TSSPDCL", supplyVoltage: "HT (11 kV)", tariffCategory: "HT-II (Commercial)", areaSqft: 140000, sanctionedLoadKw: 980, contractDemandKva: 1150, pf: 0.95, epi: 10.7, savingsInr: 620000, billsReceived: 9, billsExpected: 12, trendL: [33, 34, 35, 38, 41, 40, 38, 36, 35, 35, 36, 36.8] },
 ] as const;
 
+const TASKS = [
+  { id: "t1", title: "Apply to reduce contract demand to 800 kVA", building: "Acme Bhosari Plant", source: "DIAGNOSIS", priority: "HIGH", assignee: "R. Mehta", due: "20-06-2026", savingsInr: 1080000, status: "TODO" },
+  { id: "t2", title: "Get quotes for APFC panel (raise PF to 0.95)", building: "CoolChain Cold Storage", source: "DIAGNOSIS", priority: "HIGH", assignee: "S. Nair", due: "24-06-2026", savingsInr: 578400, status: "TODO" },
+  { id: "t3", title: "Investigate power-factor drop to 0.88", building: "CoolChain Cold Storage", source: "ALERT", priority: "HIGH", assignee: "S. Nair", due: "12-06-2026", savingsInr: null, status: "IN_PROGRESS" },
+  { id: "t4", title: "Pilot ToD load-shift on chiller plant", building: "Acme Bhosari Plant", source: "DIAGNOSIS", priority: "MEDIUM", assignee: "R. Mehta", due: "30-06-2026", savingsInr: 1109000, status: "IN_PROGRESS" },
+  { id: "t5", title: "Chase missing May bill from BESCOM", building: "Riverside Mall", source: "ALERT", priority: "MEDIUM", assignee: "A. Iyer", due: "10-06-2026", savingsInr: null, status: "IN_PROGRESS" },
+  { id: "t6", title: "Upload 3 pending bills (data gap)", building: "TechPark Block C", source: "ALERT", priority: "MEDIUM", assignee: "A. Iyer", due: "15-06-2026", savingsInr: null, status: "TODO" },
+  { id: "t7", title: "Review EPI vs benchmark (28.4 vs 18)", building: "CoolChain Cold Storage", source: "AUDIT", priority: "LOW", assignee: "S. Nair", due: "05-07-2026", savingsInr: null, status: "TODO" },
+  { id: "t8", title: "Verify corrected meter multiplying factor", building: "Acme Chakan Unit 2", source: "DIAGNOSIS", priority: "LOW", assignee: "R. Mehta", due: "28-06-2026", savingsInr: null, status: "DONE" },
+  { id: "t9", title: "Submit net-metering application", building: "Orchid Tower (HQ)", source: "AUDIT", priority: "LOW", assignee: "A. Iyer", due: "01-06-2026", savingsInr: 540000, status: "DONE" },
+] as const;
+
+const ALERT_RULES = [
+  { id: "r1", name: "Low power factor", condition: "PF < 0.90", severity: "CRITICAL", active: true },
+  { id: "r2", name: "Demand near contract", condition: "Max demand > 90% of contract demand", severity: "WARNING", active: true },
+  { id: "r3", name: "Bill anomaly", condition: "Bill > 15% above weather-normalised forecast", severity: "WARNING", active: true },
+  { id: "r4", name: "EPI deviation", condition: "EPI > 10% above peer benchmark", severity: "WARNING", active: true },
+  { id: "r5", name: "Missing bill", condition: "No bill received past due date", severity: "INFO", active: true },
+  { id: "r6", name: "Meter offline", condition: "No reading for > 4 hours", severity: "INFO", active: false },
+] as const;
+
+const ALERTS = [
+  { id: "a1", title: "Power factor below 0.90", building: "CoolChain Cold Storage", detail: "PF 0.88 vs 0.90 threshold — penalty accruing", severity: "CRITICAL", triggered: "06-06-2026", status: "NEW" },
+  { id: "a2", title: "Maximum demand above 90% of contract", building: "Riverside Mall", detail: "MD 2,300 kVA vs 2,500 kVA contract (92%)", severity: "WARNING", triggered: "05-06-2026", status: "NEW" },
+  { id: "a3", title: "Bill 23% above forecast", building: "TechPark Block C", detail: "₹36.8L vs ₹29.9L expected for May", severity: "WARNING", triggered: "04-06-2026", status: "ACKNOWLEDGED" },
+  { id: "a4", title: "EPI above benchmark", building: "CoolChain Cold Storage", detail: "28.4 kWh/ft² vs 18 benchmark for cold storage", severity: "WARNING", triggered: "02-06-2026", status: "ACKNOWLEDGED" },
+  { id: "a5", title: "Bill not received", building: "Riverside Mall", detail: "May 2026 bill missing past due date", severity: "INFO", triggered: "03-06-2026", status: "NEW" },
+  { id: "a6", title: "Meter offline", building: "Orchid Tower (HQ)", detail: "No reading received for 6 hours", severity: "INFO", triggered: "01-06-2026", status: "RESOLVED" },
+] as const;
+
+/** Parse DD-MM-YYYY → UTC Date. */
+function ddmmyyyy(s: string): Date {
+  const [dd, mm, yy] = s.split("-").map(Number);
+  return new Date(Date.UTC(yy, mm - 1, dd));
+}
+
 async function main() {
   await prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe("SELECT set_config('app.current_org', $1, true)", DEMO_ORG_ID);
@@ -53,6 +89,36 @@ async function main() {
         where: { id },
         update: { ...rest, trendL: [...rest.trendL] },
         create: { id, orgId: DEMO_ORG_ID, ...rest, trendL: [...rest.trendL] },
+      });
+    }
+
+    // Tasks.
+    for (const t of TASKS) {
+      const { id, ...rest } = t;
+      await tx.task.upsert({
+        where: { id },
+        update: { ...rest },
+        create: { id, orgId: DEMO_ORG_ID, ...rest },
+      });
+    }
+
+    // Alert rules.
+    for (const r of ALERT_RULES) {
+      const { id, ...rest } = r;
+      await tx.alertRule.upsert({
+        where: { id },
+        update: { ...rest },
+        create: { id, orgId: DEMO_ORG_ID, ...rest },
+      });
+    }
+
+    // Alert instances.
+    for (const a of ALERTS) {
+      const { id, triggered, ...rest } = a;
+      await tx.alertInstance.upsert({
+        where: { id },
+        update: { ...rest, triggered: ddmmyyyy(triggered) },
+        create: { id, orgId: DEMO_ORG_ID, ...rest, triggered: ddmmyyyy(triggered) },
       });
     }
 
