@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   BadgeCheck,
   Leaf,
+  ArrowLeftRight,
+  BatteryCharging,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -37,6 +39,8 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: "Approvals", href: "/app/capex", icon: BadgeCheck },
   { label: "Compliance", href: "/app/compliance", icon: ShieldCheck },
   { label: "Carbon", href: "/app/carbon", icon: Leaf },
+  { label: "Markets", href: "/app/markets", icon: ArrowLeftRight },
+  { label: "Assets", href: "/app/assets", icon: BatteryCharging },
   { label: "Settings", href: "/app/settings", icon: Settings },
 ];
 

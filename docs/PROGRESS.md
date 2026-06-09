@@ -5,15 +5,16 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · Bill engine (58 + audit) ✅ · B5 (decision-makers) ✅ DONE
+- **Active stage:** A ✅ · B1 ✅ · B2 ✅ · B3 ✅ · B4 ✅ · engine ✅ · B5 ✅ · B6 (markets & assets) ✅ DONE
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
-- **Next action:** Stage B6 — energy markets & assets (open access journey, IEX/carbon trading, BESS,
-  microgrid, VPP). Then formalise the Stage D mock-API seam. (OCR remains Stage G, clearly simulated.)
+- **Next action:** Stage B7 — ecosystem & growth (gamification, marketplace + reverse auction, training,
+  localisation, public pages: DPDP/ToS, ROI calculator, API docs, status). Then formalise the Stage D
+  mock-API seam. (OCR remains Stage G, clearly simulated.) Only `/app/settings` remains a stub.
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
   `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
-  `/app/{carbon,settings}` (stubs)
+  `/app/carbon` · `/app/markets` · `/app/assets` · `/app/settings` (stub)
 - **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·
   `/field/collection`
 - **Other:** `/` · `/analyze` (B1) · `/styleguide` · `/login`
@@ -34,6 +35,20 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage B6)
+- **Stage B6 complete — energy markets & assets.** From `lib/mock/energy-markets.ts`:
+  - **Carbon** (`/app/carbon`, replaces the stub) — GHG inventory: Scope 1/2/3 totals, emissions-by-scope
+    chart, per-scope source breakdown (Scope 2 marked auto-from-bills).
+  - **Markets** (`/app/markets`) — tabs: **Open access** (eligibility → charges → NOC journey with a
+    per-kWh cost build-up: exchange + wheeling/CSS/additional/transmission/losses vs grid tariff → net
+    saving + annual ₹), **IEX** (DAM/RTM KPIs + day-ahead price-by-block chart), **Carbon credits** (CCTS
+    held/value/retired + credits-by-project).
+  - **Assets** (`/app/assets`) — tabs: **BESS** (sizing, demand + arbitrage saving split, payback),
+    **Microgrid** (H13: islanding hours, reliability, renewable share, components), **VPP** (H14:
+    dispatchable kW aggregated across sites, DR events/revenue, DER mix).
+  - Added nav: Markets, Assets. Carbon stub is now real.
+- Next: Stage B7 (ecosystem & growth).
 
 ### 2026-06-09 (Stage B5)
 - **Stage B5 complete — decision-makers.** From `lib/mock/sustainability.ts` and `lib/mock/capex.ts`:
