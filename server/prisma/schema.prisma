@@ -569,3 +569,15 @@ model Remittance {
   @@index([orgId])
   @@index([licenseId])
 }
+
+// ---------------------------------------------------------------- auth
+// Global identity index for login bootstrapping: maps an email to its org BEFORE
+// any tenant context exists. Deliberately NOT under row-level security (it is
+// the lookup that establishes which org you belong to). One account per email.
+model Account {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  orgId     String
+  userId    String
+  createdAt DateTime @default(now())
+}

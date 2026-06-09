@@ -9,8 +9,23 @@
  * and stay on fixtures until the backend reaches data parity / a non-static host.
  */
 
-/** Demo tenant until real auth (matches the server seed). */
-const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000001";
+const SESSION_KEY = "deft_session";
+
+/** Verified session token (set on login). Client-side only (localStorage). */
+export function getSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+export function setSessionToken(token: string): void {
+  if (typeof window !== "undefined") window.localStorage.setItem(SESSION_KEY, token);
+}
+export function clearSessionToken(): void {
+  if (typeof window !== "undefined") window.localStorage.removeItem(SESSION_KEY);
+}
 
 export function getApiBase(): string {
   return (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
@@ -31,11 +46,12 @@ export const NO_STORE = { cache: "no-store" as const };
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const base = getApiBase();
   if (!base) throw new Error("API not configured (NEXT_PUBLIC_API_URL unset)");
+  const token = getSessionToken(); // client-side only; SSR is anonymous (→ demo org)
   const res = await fetch(`${base}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      "x-org-id": DEMO_ORG_ID,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
   });

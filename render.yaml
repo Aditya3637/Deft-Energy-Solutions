@@ -27,6 +27,12 @@ services:
         value: "4000"
       - key: CORS_ORIGINS
         value: "https://aditya3637.github.io,https://deft-energy-solutions.vercel.app,http://localhost:3000"
+      # Auth (Stage H): session/magic-link signing secret. Set in the dashboard
+      # (openssl rand -hex 32). Without it a dev fallback is used (insecure).
+      - key: AUTH_SECRET
+        sync: false
+      - key: APP_URL
+        sync: false
       # Bill extraction (Stage G). Set the key in the Render dashboard — never commit it.
       - key: ANTHROPIC_API_KEY
         sync: false

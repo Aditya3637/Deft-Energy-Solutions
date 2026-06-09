@@ -14,11 +14,13 @@ import { BillFetchModule } from "./billfetch/billfetch.module";
 import { CorrectionsModule } from "./corrections/corrections.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { CollectionsModule } from "./collections/collections.module";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    AuthModule,
     BuildingsModule,
     BillsModule,
     DiagnosisModule,

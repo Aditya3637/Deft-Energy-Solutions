@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Stage H — real auth / multi-tenant foundation)
+- **Verified session tokens replace the spoofable `x-org-id` header** (the real security hole: any client
+  could read any org by setting that header). Hand-rolled HS256 JWT (`server/src/auth/jwt.ts`, no dep,
+  fixed-alg, constant-time compare, magic-vs-session `kind` claim). `CurrentOrg` now derives the org from
+  a **verified** Bearer token; **anonymous / invalid → demo org** (fail-safe; never another tenant; keeps
+  "value before signup").
+- **Magic-link auth** (`/v1/auth/request|verify|me`): a non-RLS `Account` table bootstraps email→org
+  (solves the RLS-vs-login chicken-and-egg); a new email mints its own org + OWNER user under RLS.
+- **Crypto locked in CI:** `scripts/auth-check.ts` (round-trip, tamper, malformed, magic↔session
+  confusion) runs in Server CI alongside the diagnosis/commission invariants. `npm run auth:check`.
+- **Frontend:** `lib/api/auth.ts` (request/verify/me/signOut, token in localStorage); `apiFetch` sends
+  `Authorization: Bearer` when present (and stopped sending `x-org-id`); `/login` magic-link form wired
+  end-to-end incl. handling a `?token=` link click. Env: `AUTH_SECRET`/`APP_URL` (`.env.example`,
+  `render.yaml`, sync:false).
+- **Deferred (documented in PLAN §H):** live email delivery (link returned/logged for now); **SSR cookie
+  session** (server-rendered pages stay demo-scoped until the token rides a cookie); threading the token
+  through the remaining manual-header client fetches; roles/membership.
+
 ### 2026-06-09 (Core loop — "act on it": create a task from a diagnosis finding)
 - **The result screen's top recommended action is now actionable.** "Add to my tasks" on the biggest
   recoverable finding creates a real task (title = the fix, building = consumer, savings = the ₹ found,
