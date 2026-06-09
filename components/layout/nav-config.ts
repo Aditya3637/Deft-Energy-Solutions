@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Layers,
+  Scissors,
   FileText,
   Building2,
   ListChecks,
@@ -63,8 +64,9 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Reprice & generate",
+    label: "Reduce, reprice & generate",
     items: [
+      { label: "Efficiency", href: "/app/efficiency", icon: Scissors },
       { label: "Markets", href: "/app/markets", icon: ArrowLeftRight },
       { label: "Assets", href: "/app/assets", icon: BatteryCharging },
       { label: "Carbon", href: "/app/carbon", icon: Leaf },

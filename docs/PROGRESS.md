@@ -7,6 +7,25 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Efficiency engine — the "Reduce" rung, now a live number)
+- **Built the genuinely-missing module** (spec module #2, Energy Efficiency Engine). Turns the Savings
+  Stack's "Reduce — Unlock" placeholder into a quantified, real-data rung.
+- **`server/src/efficiency/` (pure `computeEfficiency`, CI-tested):** a curated **ECM library** per building
+  kind (INDUSTRIAL vs COMMERCIAL) — VFDs, compressed-air, process/waste-heat, LED, HVAC optimisation, BMS,
+  cool-roof, refrigeration, pumping. Savings = the org's **real kWh** (grouped by building type from bills)
+  × its **blended ₹/kWh** × an industry-benchmark reduction; capex derived from a benchmark **payback**;
+  aggregate **capped at 30%** of consumption. Strictly consumption-reduction — **no overlap** with the
+  58-check diagnosis (PF/CD/tariff/ToD). `GET /v1/efficiency`.
+- **No fabrication:** empty org → zero measures; ECMs gate by building kind (factory → VFD/compressed-air;
+  office → HVAC/LED); unattributed bills default to a commercial profile.
+- **Frontend:** `lib/api/efficiency.ts` seam + `/app/efficiency` (headline ₹/yr + kWh + %-of-consumption,
+  saving-by-measure chart, ranked measure table with capex/payback). Nav: **"Reduce, reprice & generate"**
+  group now leads with **Efficiency**.
+- **Savings Stack wired live:** `buildSavingsStack` takes `efficiencyINR`; the **Reduce rung is now a real
+  quantified number** (was "needs-data") and links to `/app/efficiency`.
+- **CI** `efficiency-check.ts`: industrial/commercial/mixed/empty personas — scales with kWh, right ECMs
+  per kind, capex = savings × payback, ≤30% ceiling, honest zeros.
+
 ### 2026-06-09 (Story/UX — Savings Stack + nav regrouped by the value ladder)
 - **Made the UI tell the money story.** The product had 19 sibling tools but no single view of how they
   add up; the nav was a flat feature list. Fixed both.

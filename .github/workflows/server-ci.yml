@@ -53,6 +53,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/integrations-check.ts
       - name: Plan & entitlement invariants
         run: npx ts-node --transpile-only scripts/billing-check.ts
+      - name: Efficiency engine invariants
+        run: npx ts-node --transpile-only scripts/efficiency-check.ts
 
   docker:
     runs-on: ubuntu-latest

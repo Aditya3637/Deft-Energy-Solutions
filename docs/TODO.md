@@ -18,6 +18,10 @@
   digital-PDF text-parse), per-DISCOM templates, confidence + mandatory human review, corrections-capture
   loop, accuracy dashboard. *(needs the backend vision key to OCR live — see big-ticket #3.)*
 - **BBPS / DISCOM-portal bill fetch:** provider seam scaffolded (mock + generic aggregator), 15-DISCOM catalog.
+- **Savings Stack (`/app/savings`):** one lever-attributed money view (Recover / Reduce / Reprice /
+  Generate / Earn), composed from the live seams; nav regrouped by the value ladder.
+- **Efficiency engine (`/app/efficiency`, the "Reduce" rung):** ECM library × real consumption (by building
+  kind), capped at 30%; `GET /v1/efficiency`; CI `efficiency:check`. No overlap with the diagnosis.
 - **Diagnosis engine (58 checks):** correctness-audited (false-positive fixes), invariant-tested in CI, +
   a **multi-DISCOM persona test** (8 DISCOMs).
 - **Payments & due-date tracking** (multi-asset: overdue / due-soon / paid-on-time).

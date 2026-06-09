@@ -39,6 +39,7 @@ export type SavingsStack = {
 export type StackInputs = {
   annualSpendINR: number;
   recoverableINR: number; // diagnosis: PF / CD / tariff / billing-error / late-fee
+  efficiencyINR: number; // ECM consumption-reduction potential
   oaEligible: boolean;
   oaAnnualINR: number; // open access vs grid tariff
   bessAnnualINR: number; // BESS demand-shave + arbitrage
@@ -61,9 +62,9 @@ export function buildSavingsStack(input: StackInputs): SavingsStack {
       key: "reduce",
       title: "Reduce — cut the consumption itself",
       blurb: "Efficiency retrofits (LED, HVAC, VFD, compressed air). The cheapest unit is the one you don't use.",
-      annualINR: null, // efficiency engine not yet measuring — the missing rung
-      state: "needs-data",
-      href: "/app/analytics",
+      annualINR: input.efficiencyINR > 0 ? input.efficiencyINR : 0,
+      state: input.efficiencyINR > 0 ? "live" : "needs-data",
+      href: "/app/efficiency",
     },
     {
       key: "reprice",

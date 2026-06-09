@@ -6,17 +6,19 @@ import { buildSavingsStack } from "@/lib/savings-stack";
 export const metadata = { title: "Savings Stack" };
 
 export default async function SavingsPage() {
-  const [totals, oa, bess, credits] = await Promise.all([
+  const [totals, oa, bess, credits, eff] = await Promise.all([
     api.portfolio.totals(),
     api.markets.openAccess(),
     api.markets.bess(),
     api.markets.carbonCredits(),
+    api.efficiency.potential(),
   ]);
   const oaEcon = oaEconomics(oa);
 
   const stack = buildSavingsStack({
     annualSpendINR: totals.annualSpendINR,
     recoverableINR: totals.savingsINR, // portfolio-wide diagnosis savings (no-capex)
+    efficiencyINR: eff.annualSavingInr, // ECM consumption-reduction potential
     oaEligible: oa.eligible,
     oaAnnualINR: oaEcon.annualINR,
     bessAnnualINR: bess.demandSavingINR + bess.arbitrageSavingINR,
