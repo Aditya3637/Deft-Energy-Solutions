@@ -4,7 +4,8 @@ import * as React from "react";
 import { Mail, MessageSquare, Smartphone, Bell } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { LANGUAGES } from "@/lib/api/ecosystem";
+import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/dictionary";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ const CHANNELS = [
 ];
 
 export function SettingsView() {
-  const [lang, setLang] = React.useState(LANGUAGES[0]);
+  const { locale, setLocale } = useLocale();
   const [channels, setChannels] = React.useState<Record<string, boolean>>(
     Object.fromEntries(CHANNELS.map((c) => [c.id, c.on])),
   );
@@ -60,23 +61,24 @@ export function SettingsView() {
           <CardHeader>
             <CardTitle>Language</CardTitle>
             <CardDescription>
-              Choose the platform language. English now; regional languages roll out with the i18n layer.
+              Switch the platform language — the change applies live (try the sidebar). English and Hindi
+              are translated; other languages persist and fall back to English until their catalogues land.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2 sm:grid-cols-2">
-            {LANGUAGES.map((l) => (
+            {LOCALES.map((l) => (
               <button
                 key={l}
                 type="button"
-                onClick={() => setLang(l)}
-                aria-pressed={lang === l}
+                onClick={() => setLocale(l)}
+                aria-pressed={locale === l}
                 className={cn(
                   "flex items-center justify-between rounded-md border px-4 py-2.5 text-left text-sm transition-colors",
-                  lang === l ? "border-primary bg-primary/5 font-medium" : "hover:bg-muted/50",
+                  locale === l ? "border-primary bg-primary/5 font-medium" : "hover:bg-muted/50",
                 )}
               >
-                {l}
-                {lang === l && <span className="text-xs text-primary">Selected</span>}
+                {LOCALE_LABELS[l]}
+                {locale === l && <span className="text-xs text-primary">Selected</span>}
               </button>
             ))}
           </CardContent>

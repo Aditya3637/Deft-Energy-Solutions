@@ -8,6 +8,8 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/layout/brand";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { PRIMARY_NAV, type NavItem } from "@/components/layout/nav-config";
 
 /**
@@ -24,11 +26,14 @@ export function AppShell({
   nav?: NavItem[];
 }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const mainRef = React.useRef<HTMLElement>(null);
 
-  // Close drawer on route change.
+  // Close drawer + reset the content scroll region to top on route change (DoD).
   React.useEffect(() => {
     setMobileOpen(false);
+    mainRef.current?.scrollTo({ top: 0 });
   }, [pathname]);
 
   // Esc closes the drawer; lock background scroll while open (DoD).
@@ -64,7 +69,7 @@ export function AppShell({
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            {t(`nav.${item.label.toLowerCase()}`)}
           </Link>
         );
       })}
@@ -117,8 +122,9 @@ export function AppShell({
           >
             <Menu className="h-5 w-5" />
           </Button>
+          <Breadcrumbs />
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Demo Org</span>
+            <span className="text-sm text-muted-foreground">{t("org.demo")}</span>
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
               DE
             </span>
@@ -126,8 +132,11 @@ export function AppShell({
         </header>
 
         {/* The single scroll region. */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+        <main ref={mainRef} id="main-content" className="flex-1 overflow-y-auto scrollbar-thin">
+          <div
+            key={pathname}
+            className="mx-auto w-full max-w-7xl p-4 duration-200 animate-in fade-in sm:p-6 lg:p-8"
+          >
             {children}
           </div>
         </main>

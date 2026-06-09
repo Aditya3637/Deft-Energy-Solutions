@@ -5,7 +5,7 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage B ✅ · **Stage D mock-API seam ✅ DONE** (every screen reads data through `lib/api/*`)
+- **Active stage:** Stage B ✅ · Stage D seam ✅ · **Stage C interaction polish ✅ DONE**
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
@@ -14,9 +14,9 @@
   `await` them; client components receive initial data as props from their server wrappers. **No screen
   imports `lib/mock/*` directly** — only the api layer does. Pure logic (diagnosis, ROI, formatting) stays
   in lib/* (runs client-side regardless of backend).
-- **Next action:** Stage C interaction-polish pass (a11y/keyboard audit, scroll restoration, route
-  transitions, i18n string catalogue), then **Stage E** (NestJS backend + 61-table schema) → F → G → H.
-  (OCR remains Stage G, clearly simulated.)
+- **Next action:** **Stage E** — start the real backend (NestJS + 61-table PostgreSQL schema with RLS),
+  which the seam is set up to receive → F (wire endpoints) → G (integrations + real OCR) → H (security/perf/
+  testing). (OCR remains Stage G, clearly simulated.)
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
   `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
   `/app/carbon` · `/app/markets` · `/app/assets` · `/app/marketplace` · `/app/training` ·
@@ -42,6 +42,18 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage C — interaction & navigation polish)
+- **Breadcrumbs** in the app topbar (path-derived, i18n-aware, hidden on mobile).
+- **Scroll restoration:** the app content scroll region resets to top on every route change.
+- **Route transition:** subtle `animate-in fade-in` on content (respects reduced-motion via globals).
+- **Skip-to-content** link (keyboard/SR a11y) in the root layout; `#main-content` on app/public/field shells.
+- **Magic-link login** is now a client form with inline email validation (disabled-until-valid, aria-invalid
+  + described-by error, success state) — `components/auth/magic-link-form.tsx`.
+- **i18n scaffold:** `lib/i18n/dictionary.ts` (English + Hindi catalogues, 5 more locales fall back) +
+  `LocaleProvider` (context, localStorage persistence, hydration-safe). Wired into the root layout; the
+  **Settings → Language picker now switches locale live** (sidebar nav + topbar re-label instantly, e.g.
+  Hindi). Other languages persist and fall back to English until their catalogues are added.
 
 ### 2026-06-09 (Stage D — mock-API seam)
 - Built `lib/api/*` (portfolio, tasks, alerts, field, sustainability, capex, markets, ecosystem, bills) +
