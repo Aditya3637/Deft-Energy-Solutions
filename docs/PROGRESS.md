@@ -59,6 +59,14 @@
 
 ## Log
 
+### 2026-06-09 (Frontend portfolio live-fetch)
+- `lib/api/portfolio.*` now fetch the live backend when rendering **server-side on Vercel**
+  (`process.env.VERCEL` + API configured), mapping the server Building shape → frontend Building; otherwise
+  fixtures. GitHub Pages static build has no `VERCEL`, so it keeps baking fixtures — unchanged & green.
+  Live fetches use `cache: "no-store"` and **fall back to fixtures** if the backend is unreachable.
+- So: connect the frontend to Vercel (env `NEXT_PUBLIC_API_URL`) and the dashboard / buildings / analytics /
+  bills pages render live data per request; the Pages demo is untouched.
+
 ### 2026-06-09 (Backend parity — portfolio domain)
 - **Building** model gains `trendL Float[]`, `billsReceived`, `billsExpected` (matches the frontend shape).
   **Seed** upserts all **6** demo buildings by stable slug id (links match the frontend), backfills the new
