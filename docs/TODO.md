@@ -30,6 +30,14 @@
 - **Core loop closed:** analyze → savings → `/app/bills` (your analyzed bills + ₹) → "Add to my tasks".
 - **Auth (Stage H foundation):** verified HS256 sessions + magic-link; spoofable `x-org-id` removed;
   **SSR cookie session** (signed-in users see their own org server-side); anonymous → demo (value before signup).
+- **Monetization (Stage H):** plan catalog + entitlement gates, 402 quota enforcement (signed-in only),
+  Razorpay payment seam (manual fallback) + signature-verified webhooks, **14-day Pro trial**, **recurring
+  subscriptions**, **dunning grace** + in-app **upgrade prompt**. CI `billing:check`. *(flip on with
+  `PAYMENTS_PROVIDER=razorpay` + keys + `RAZORPAY_PLAN_ID_PRO`.)*
+- **Notification layer:** provider seam — email (log + Resend) + SMS (log + generic gateway), pure
+  templates; **magic-link + dunning emails wired**. CI `notifications:check`. *(set `NOTIFY_EMAIL_PROVIDER`
+  + `RESEND_API_KEY` to send.)*
+- **Marketing landing:** rewritten to mirror the full savings ladder (Recover/Reduce/Reprice/Generate/Earn).
 
 ---
 
@@ -89,6 +97,18 @@
    - **Capex approval → live** — `/app/capex` still reads the mock; `CapexRequest` exists server-side
      (marketplace RFQs already read it). Wire the live read + request/approve flow (FM→EM→CFO→Board).
 
+9. **Scheduler / cron (`scheduler-service`)** — the missing piece for *proactive* value. Powers:
+   **"new savings found this month" digest** (the retention email — notification layer is ready, just
+   needs a trigger), **DPDP retention auto-purge** (Stage H #5), recurring **benchmarks**, and
+   tariff-scrape refresh. Pick BullMQ/Redis or a hosted cron.
+
+10. **Remaining spec modules (largely unbuilt — SPEC_V1's 19):** **Audit SaaS** (engagement → field data →
+    BEE report builder), **Operations & Maintenance** (PM scheduling, AMC, asset register, calibration,
+    safety incidents — only mock work-orders today), **Document Management** (`Document` table exists; no
+    DMS UI / versioning / e-sign), **Admin Panel & RBAC** (12 roles, org/user management, white-label),
+    **Financial Services** (ESCO structurer, green loans/subsidies, Budget-vs-Actual). *(Energy Efficiency
+    Engine — previously the big gap — is now ✅, see Built.)*
+
 ---
 
 ## Backlog (small / later)
@@ -110,8 +130,8 @@
       webhooks activate/downgrade; one-time link fallback). *To take real money:* `PAYMENTS_PROVIDER=razorpay`
       + keys (+ `RAZORPAY_PLAN_ID_PRO` for auto-renew). ✅ **Dunning** (`subscription.pending` → 7-day
       `past_due` grace, then auto-downgrade; red banner) + **402 → in-app upgrade prompt** (`ApiError` →
-      `bills.create` surfaces the limit → `UpgradePrompt` in the analyze flow). *Future:* per-seat proration,
-      dunning email/WhatsApp nudges during grace.
+      `bills.create` surfaces the limit → `UpgradePrompt` in the analyze flow). ✅ **Dunning email** (via
+      the notification layer). *Future:* per-seat proration; SMS/WhatsApp dunning nudges.
 - [ ] Customer-angle test harness for payments + collections modules (persona + multi-DISCOM).
 - [ ] Migrate CI actions to Node 24 (deprecation warning on actions/* @v4 / node20).
 - [ ] Bill detail page: show the full 58-check diagnosis (findings + needs-data) per saved bill.
@@ -129,5 +149,8 @@
 | Markets & DER (B6) | multi-DISCOM personas, honest-zeros (CI) | ✅ `npm run markets:check` |
 | Ecosystem (B7) | badges/RFQs/rewards personas (CI) | ✅ `npm run ecosystem:check` |
 | Integration adapters (IEX/registry) | provider select + pure mappers (CI) | ✅ `npm run integrations:check` |
+| Efficiency engine | industrial/commercial/mixed/empty personas (CI) | ✅ `npm run efficiency:check` |
+| Monetization (plans/billing) | limits, gating, webhook sig, trial/recurring/dunning (CI) | ✅ `npm run billing:check` |
+| Notification layer | provider select + magic-link/dunning templates (CI) | ✅ `npm run notifications:check` |
 | Bill extraction (vision-OCR) | real PDFs per DISCOM, end-to-end | ⏳ needs backend key (big-ticket #2) |
 | Payments / collections flows | persona + multi-DISCOM | ⏳ backlog |
