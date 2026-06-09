@@ -45,6 +45,16 @@
 
 ## Log
 
+### 2026-06-09 (Stage E — diagnosis engine ported + persisted)
+- Ported the **58-check diagnosis engine** server-side (`server/src/diagnosis/` — loss-taxonomy + engine,
+  faithful to the frontend, self-contained ExtractedField type).
+- New `diagnosis` module: `POST /v1/diagnosis` (stateless, mirrors the frontend) and
+  `POST /v1/bills/:id/diagnose` (persists). **Creating a bill auto-runs the engine** and stores a
+  `Diagnosis` (recoverable/opportunity ₹) + one `LossFinding` per detected loss; re-runnable.
+- `billToFields()` projects the 42 persisted columns into the engine's `ExtractedField[]`; renamed the
+  `crossSubsidySurcharge` column so keys map 1:1. Server CI still compile-verifies.
+- Next: auth (real tenant from JWT), remaining modules, then Stage F wiring.
+
 ### 2026-06-09 (Stage E — backend foundation)
 - Scaffolded the **`server/`** workspace: NestJS 10 + Prisma 5 + PostgreSQL. Separate from the frontend
   (does not deploy to Pages); excluded from the root tsconfig so the Pages build is unaffected.

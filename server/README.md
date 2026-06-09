@@ -15,8 +15,11 @@ from the Next.js frontend — it does not deploy to GitHub Pages.
   `current_setting('app.current_org')`. `PrismaService.withOrg()` sets it per
   transaction.
 - **Modules** — `health`, `buildings` (GET list/by-id), `bills` (POST create with
-  the 42-field DTO, GET list/by-id). These mirror the frontend `api.portfolio` /
-  `api.bills` contracts.
+  the 42-field DTO, GET list/by-id), `diagnosis` (the **58-check engine ported
+  server-side** + persistence). These mirror the frontend `api.*` contracts.
+- **Diagnosis engine** (`src/diagnosis/`) — the exact frontend engine
+  (loss-taxonomy + detectors + recoverable/opportunity buckets). Creating a bill
+  auto-runs it and stores a `Diagnosis` + one `LossFinding` per detected loss.
 
 ## Run it
 
@@ -36,9 +39,11 @@ npm run start:dev             # http://localhost:4000/v1/health
 | GET    | `/health`        | liveness |
 | GET    | `/buildings`     | tenant's buildings |
 | GET    | `/buildings/:id` | one building |
-| POST   | `/bills`         | create a bill (42-field DTO) |
-| GET    | `/bills`         | recent bills |
-| GET    | `/bills/:id`     | one bill |
+| POST   | `/bills`         | create a bill (42-field DTO) → auto-diagnoses & returns the diagnosis |
+| GET    | `/bills`         | recent bills (with diagnosis summary) |
+| GET    | `/bills/:id`     | one bill + diagnosis + findings |
+| POST   | `/diagnosis`     | stateless: `{ fields: [{key,value}] }` → full diagnosis |
+| POST   | `/bills/:id/diagnose` | re-run + persist diagnosis for a bill |
 
 Tenant is taken from the `x-org-id` header (falls back to the demo org) until
 real auth (JWT) lands at Stage F.
@@ -50,8 +55,6 @@ real auth (JWT) lands at Stage F.
 
 ## Next (later Stage E / F)
 
-- Port the 58-check diagnosis engine server-side (`/v1/diagnosis`) and persist
-  `Diagnosis` + `LossFinding` per bill.
 - Auth (OIDC/JWT) → real tenant from the token; remove the `x-org-id` fallback.
 - Tasks / alerts / sustainability / capex / markets modules to complete the seam.
 - Remaining tables (interval data at TimescaleDB scale, trading, marketplace, audit).

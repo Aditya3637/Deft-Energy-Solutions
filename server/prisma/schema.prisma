@@ -211,7 +211,7 @@ model ElectricityBill {
   fixedDemandCharges   Float?
   energyCharges        Float?
   wheelingCharges      Float?
-  crossSubsidyCharge   Float?
+  crossSubsidySurcharge Float?
   additionalSurcharge  Float?
   pfPenaltyAmt         Float?
   pfPenaltyRatePct     Float?

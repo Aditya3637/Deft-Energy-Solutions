@@ -24,7 +24,7 @@ export class CreateBillDto {
   @IsOptional() @IsNumber() fixedDemandCharges?: number;
   @IsOptional() @IsNumber() energyCharges?: number;
   @IsOptional() @IsNumber() wheelingCharges?: number;
-  @IsOptional() @IsNumber() crossSubsidyCharge?: number;
+  @IsOptional() @IsNumber() crossSubsidySurcharge?: number;
   @IsOptional() @IsNumber() additionalSurcharge?: number;
   @IsOptional() @IsNumber() pfPenaltyAmt?: number;
   @IsOptional() @IsNumber() pfPenaltyRatePct?: number;
