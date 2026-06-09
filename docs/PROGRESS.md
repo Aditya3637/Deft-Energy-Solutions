@@ -7,6 +7,22 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-10 (Notification delivery layer + magic-link/dunning wired)
+- **Built the retention/comms engine** (same provider-seam pattern). `server/src/notifications/`:
+  channels **email** (log default + **Resend**) and **SMS** (log + generic gateway), **pure CI-tested
+  templates** (magic-link, dunning), `NotificationsService.send()` routing channel→provider. The "log"
+  provider works with **no account** (logs + reports delivered); sends **never throw** into the caller.
+- **Wired the two event-driven triggers:**
+  - **Magic-link email** — `auth.requestMagicLink` now emails the link via the layer (was log-only),
+    making sign-in self-serve once a provider is set. Dev/`AUTH_REVEAL_LINK` still returns it.
+  - **Dunning email** — `billing.markPastDue` (on `subscription.pending`) looks up the org's account email
+    and emails "update your payment — N days left" during the grace window. Only fires if a recurring sub
+    was actually active; failure can't break the webhook.
+- **CI** `notifications-check.ts`: provider selection (defaults to log) + magic-link/dunning template
+  content (link present, 15-min expiry, plan + grace-day pluralisation). Env documented
+  (`NOTIFY_EMAIL_PROVIDER`/`RESEND_API_KEY`/`NOTIFY_EMAIL_FROM`, `NOTIFY_SMS_*`). Closes big-ticket #3.
+- *Next:* a "new savings found this month" digest (needs a scheduler/cron) + SMS/WhatsApp alert delivery.
+
 ### 2026-06-10 (Story/UX — landing rewritten to mirror the savings ladder)
 - **Marketing now matches the product.** The landing led with a flat feature grid that omitted the Reduce
   (efficiency) and Earn (cashback) levers and never named the ladder. Rewrote it around the **five rungs —

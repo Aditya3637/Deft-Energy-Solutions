@@ -21,6 +21,7 @@ import {
   type CheckoutResult,
 } from "./payments/provider";
 import { manualCheckout } from "./payments/provider-manual";
+import { NotificationsService } from "../notifications/notifications.service";
 
 export type BillingStatus = {
   plan: PlanId;
@@ -47,7 +48,10 @@ type SubRow = { plan: string; status: string; startDate: Date; endDate: Date | n
 export class BillingService {
   private readonly log = new Logger(BillingService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   plans() {
     return PLANS;
@@ -208,7 +212,7 @@ export class BillingService {
       return { ok: true };
     }
     if (action === "mark_past_due") {
-      await this.markPastDue(target.orgId);
+      await this.markPastDue(target.orgId, plan.name);
       this.log.log(`Org ${target.orgId} marked past_due (grace ${DUNNING_GRACE_DAYS}d) via ${kind}`);
       return { ok: true };
     }
@@ -254,14 +258,18 @@ export class BillingService {
    * passes, effectivePlanOf() drops the org to Free with no cron. A later
    * successful charge supersedes this with a fresh active row.
    */
-  private async markPastDue(orgId: string): Promise<void> {
+  private async markPastDue(orgId: string, planName: string): Promise<void> {
     const graceEnd = new Date(Date.now() + DUNNING_GRACE_DAYS * DAY_MS);
-    await this.prisma.withOrg(orgId, (tx) =>
+    const { count } = await this.prisma.withOrg(orgId, (tx) =>
       tx.subscription.updateMany({
         where: { status: "active" }, // only paid recurring subs enter dunning
         data: { status: "past_due", endDate: graceEnd },
       }),
     );
+    if (count === 0) return; // nothing was active → nothing to dun
+    // Email the account holder to update their card before the grace window ends.
+    const account = await this.prisma.account.findFirst({ where: { orgId }, select: { email: true } });
+    if (account?.email) await this.notifications.sendDunning(account.email, planName, DUNNING_GRACE_DAYS);
   }
 
   paymentMode() {

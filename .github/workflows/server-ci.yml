@@ -55,6 +55,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/billing-check.ts
       - name: Efficiency engine invariants
         run: npx ts-node --transpile-only scripts/efficiency-check.ts
+      - name: Notification layer invariants
+        run: npx ts-node --transpile-only scripts/notifications-check.ts
 
   docker:
     runs-on: ubuntu-latest

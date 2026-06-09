@@ -2,25 +2,29 @@ import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/
 import { randomUUID } from "node:crypto";
 
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { signMagic, signSession, verifyMagic } from "./jwt";
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
-   * Step 1 — request a magic link. With no email provider wired we return the
-   * link in the response and log it (pluggable later). `sent: true` either way
-   * so the UI never reveals whether an email exists.
+   * Step 1 — request a magic link. The link is emailed via the notification
+   * layer (a "log" provider works with no email account; Resend when configured).
+   * In dev / AUTH_REVEAL_LINK it's also returned so the sandbox stays usable.
+   * `sent: true` either way so the UI never reveals whether an email exists.
    */
-  requestMagicLink(emailRaw: string) {
+  async requestMagicLink(emailRaw: string) {
     const email = (emailRaw ?? "").trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new BadRequestException("Enter a valid email");
     const token = signMagic(email);
     const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
     const link = appUrl ? `${appUrl}/login?token=${token}` : `/login?token=${token}`;
-    // eslint-disable-next-line no-console
-    if (process.env.NODE_ENV !== "production") console.log(`[auth] magic link for ${email}: ${link}`);
+    await this.notifications.sendMagicLink(email, link);
     const devReveal = process.env.NODE_ENV !== "production" || process.env.AUTH_REVEAL_LINK?.trim();
     return { sent: true, ...(devReveal ? { token, link } : {}) };
   }

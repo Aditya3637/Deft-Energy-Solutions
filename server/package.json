@@ -21,6 +21,7 @@
     "integrations:check": "ts-node --transpile-only scripts/integrations-check.ts",
     "billing:check": "ts-node --transpile-only scripts/billing-check.ts",
     "efficiency:check": "ts-node --transpile-only scripts/efficiency-check.ts",
+    "notifications:check": "ts-node --transpile-only scripts/notifications-check.ts",
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {

@@ -40,7 +40,11 @@
    reconciliation (DSR). *Blocked on licensing/banking (external).*
 2. **Live vision-OCR validation across DISCOMs:** set `ANTHROPIC_API_KEY` on the backend, run ~7–8 real
    bills per DISCOM end-to-end, measure per-DISCOM accuracy on the dashboard, tune templates. *Blocked on key.*
-3. **Magic-link email delivery** (SES/Resend) + set `AUTH_SECRET`/`APP_URL` → fully self-serve sign-in.
+3. ~~**Magic-link email delivery.**~~ ✅ **Notification layer built** (`server/src/notifications/`,
+   provider seam: email log+Resend, SMS log+generic-gateway; pure templates; CI `notifications:check`).
+   Magic-link + dunning emails now flow through it. *To send for real:* set `NOTIFY_EMAIL_PROVIDER=resend`
+   + `RESEND_API_KEY` + `NOTIFY_EMAIL_FROM` (and `AUTH_SECRET`/`APP_URL`). *Next:* "new savings this month"
+   digest (needs a scheduler/cron) + SMS/WhatsApp alert delivery.
 4. ~~**Carry savings everywhere:** dashboard + building detail show the user's saved bills + recoverable ₹.~~
    ✅ done — both surface `bills.listAnalyzed()` (live on Vercel SSR, fixture on static); building view
    filters by `buildingId`.
