@@ -7,6 +7,16 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G⁵ — accuracy dashboard UI)
+- **`/app/accuracy` — measured extraction accuracy, per DISCOM and per field.** Server page reads
+  `corrections.accuracy()` (live on Vercel SSR via `GET /v1/corrections/accuracy`; the static Pages build
+  bakes a labelled fixture). Shows: overall accuracy + reviewed-bills/fields/corrections StatCards;
+  "Accuracy by DISCOM" (where templates are needed, sorted by volume); "Hardest fields" (most-corrected
+  first — the prompt-tuning/template priority list), each a colour-banded bar (<85% red, <95% amber,
+  ≥95% green). Empty state when no reviews yet. Added to the sidebar nav (Gauge icon). Field labels via a
+  shared `fieldLabel` helper in the api layer. Closes de-risking step 5 — accuracy is now a visible,
+  measured number that rises as users review bills, not a marketing claim.
+
 ### 2026-06-09 (Stage G⁴ — corrections-capture loop)
 - **Every reviewed extraction is now logged as training data + an accuracy signal.** When the user moves
   from review → result, the frontend diffs the model's original values+confidence against the final
@@ -115,7 +125,7 @@
   which the seam is set up to receive → F (wire endpoints) → G (integrations + real OCR) → H (security/perf/
   testing). (OCR remains Stage G, clearly simulated.)
 - **Routes live (app):** `/app` · `/app/executive` · `/app/bills` · `/app/buildings` + `[id]` ·
-  `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/roi` · `/app/capex` · `/app/compliance` ·
+  `/app/tasks` · `/app/alerts` · `/app/analytics` · `/app/accuracy` · `/app/roi` · `/app/capex` · `/app/compliance` ·
   `/app/carbon` · `/app/markets` · `/app/assets` · `/app/marketplace` · `/app/training` ·
   `/app/leaderboard` · `/app/settings`
 - **Routes live (field, mobile):** `/field` · `/field/work-orders` + `[id]` · `/field/audit` ·

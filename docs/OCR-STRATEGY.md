@@ -111,9 +111,10 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
    review/correct UI; **corrections now captured** (`POST /v1/corrections` logs model value + confidence
    vs the user's final value, per field) as training data.
 4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
-5. **Live accuracy dashboard** ⏳ *data source ready* — `GET /v1/corrections/accuracy` rolls the captured
-   corrections into overall / per-DISCOM / per-field accuracy; the dashboard UI wires SPEC_V2 §7 to it
-   next, so accuracy is a measured, visible number per DISCOM, not a claim.
+5. **Live accuracy dashboard** ✅ *done* — `/app/accuracy` reads `GET /v1/corrections/accuracy` and shows
+   overall / per-DISCOM / per-field accuracy (colour-banded bars, hardest fields first). Live on Vercel
+   SSR; the static demo bakes a fixture. Accuracy is now a measured, visible number per DISCOM, not a
+   claim — and it rises as users review bills.
 
 ## Extraction providers & cost (Stage G — implemented)
 
