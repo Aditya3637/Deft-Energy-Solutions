@@ -9,6 +9,7 @@ export type ExtractOutcome = {
   fields: M.ExtractedField[];
   /** true → real extraction from the backend; false → sample fallback. */
   live: boolean;
+  provider?: string;
   model?: string;
   found?: number;
   total?: number;
@@ -20,6 +21,7 @@ export type ExtractOutcome = {
 
 type ServerExtract = {
   fields: M.ExtractedField[];
+  provider: string;
   model: string;
   found: number;
   total: number;
@@ -69,6 +71,7 @@ export const extract = {
       return {
         fields: data.fields,
         live: true,
+        provider: data.provider,
         model: data.model,
         found: data.found,
         total: data.total,

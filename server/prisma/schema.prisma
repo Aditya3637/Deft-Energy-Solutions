@@ -106,6 +106,7 @@ model Organisation {
   subscriptions Subscription[]
   capexRequests CapexRequest[]
   ghgInventory  GhgInventory[]
+  extractionFeedback ExtractionFeedback[]
 }
 
 model User {
@@ -409,4 +410,28 @@ model IntervalReading {
   building Building @relation(fields: [buildingId], references: [id])
 
   @@index([buildingId, ts])
+}
+
+// Corrections-capture loop (Stage G): every reviewed extraction is logged with
+// the model's value + confidence vs the user's final value, per field. Feeds
+// training data and the per-DISCOM accuracy view. `corrections` is an array of
+// { fieldKey, extracted, extractedConfidence, final, corrected }.
+model ExtractionFeedback {
+  id             String   @id @default(uuid())
+  orgId          String
+  provider       String // anthropic | openai | bbps | bbps-demo | sample
+  model          String   @default("")
+  source         String // vision | pdf-text | bbps | bbps-demo | sample
+  discom         String   @default("")
+  fieldsTotal    Int      @default(0)
+  fieldsFound    Int      @default(0)
+  correctedCount Int      @default(0)
+  corrections    Json
+  createdAt      DateTime @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([discom])
+  @@index([createdAt])
 }

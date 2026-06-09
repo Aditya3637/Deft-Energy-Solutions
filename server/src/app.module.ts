@@ -11,6 +11,7 @@ import { TasksModule } from "./tasks/tasks.module";
 import { AlertsModule } from "./alerts/alerts.module";
 import { ExtractModule } from "./extract/extract.module";
 import { BillFetchModule } from "./billfetch/billfetch.module";
+import { CorrectionsModule } from "./corrections/corrections.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { BillFetchModule } from "./billfetch/billfetch.module";
     AlertsModule,
     ExtractModule,
     BillFetchModule,
+    CorrectionsModule,
   ],
   controllers: [HealthController],
 })

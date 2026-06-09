@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
 import { extract } from "@/lib/api/extract";
 import { billfetch, type Biller } from "@/lib/api/billfetch";
+import { corrections } from "@/lib/api/corrections";
 import { arithmeticChecks, type BillCheck } from "@/lib/bill-checks";
 import { useToast } from "@/components/ui/toast";
 import { fullDiagnose } from "@/lib/diagnosis";
@@ -62,6 +63,13 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
   );
   // Set when extraction fell back to the sample (no backend / unreadable file).
   const [notice, setNotice] = React.useState<string | null>(null);
+  // Pristine extracted values + context, for the corrections-capture loop.
+  const origin = React.useRef<{
+    originalFields: ExtractedField[];
+    provider: string;
+    model: string;
+    source: string;
+  } | null>(null);
 
   // Stage G: upload the chosen file to the real extraction endpoint. A null
   // file ("try the sample") and any backend failure both fall back to the
@@ -71,6 +79,12 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
       setStep("extracting");
       const out = await extract.fromFile(file);
       setFields(out.fields.map((f) => ({ ...f })));
+      origin.current = {
+        originalFields: out.fields.map((f) => ({ ...f })),
+        provider: out.live ? out.provider ?? "unknown" : "sample",
+        model: out.model ?? "",
+        source: out.live ? out.source ?? "vision" : "sample",
+      };
       setNotice(
         !out.live
           ? out.note ?? null
@@ -85,15 +99,25 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
 
   // BBPS / DISCOM-portal fetch (Stage G). Lands on the same review screen; the
   // panel handles its own loading/errors and only calls this on success.
-  const onFetched = React.useCallback((fetched: ExtractedField[], note: string) => {
-    setFields(fetched.map((f) => ({ ...f })));
-    setNotice(note);
-    setStep("review");
-  }, []);
+  const onFetched = React.useCallback(
+    (fetched: ExtractedField[], note: string, ctx?: { provider: string; source: string }) => {
+      setFields(fetched.map((f) => ({ ...f })));
+      origin.current = {
+        originalFields: fetched.map((f) => ({ ...f })),
+        provider: ctx?.provider ?? "bbps",
+        model: "",
+        source: ctx?.source ?? "bbps-demo",
+      };
+      setNotice(note);
+      setStep("review");
+    },
+    [],
+  );
 
   const reset = React.useCallback(() => {
     setFields(sampleFields.map((f) => ({ ...f })));
     setNotice(null);
+    origin.current = null;
     setStep("upload");
   }, [sampleFields]);
 
@@ -102,6 +126,38 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
       prev.map((f) => (f.key === key ? { ...f, value, confidence: 1 } : f)),
     );
   }, []);
+
+  // Review → result: log how the user corrected the extraction (training data
+  // + accuracy signal). Fire-and-forget; never blocks. Skipped for the sample.
+  const goToResult = React.useCallback(() => {
+    const o = origin.current;
+    if (o && o.source !== "sample") {
+      const norm = (s: string) => s.replace(/[₹,\s]/g, "").trim().toLowerCase();
+      const byKey = new Map(fields.map((f) => [f.key, f.value]));
+      const items = o.originalFields
+        .map((of) => {
+          const final = byKey.get(of.key) ?? "";
+          return {
+            fieldKey: of.key,
+            extracted: of.value,
+            extractedConfidence: of.confidence,
+            final,
+            corrected: norm(of.value) !== norm(final),
+          };
+        })
+        .filter((it) => it.extracted !== "" || it.final !== "");
+      void corrections.submit({
+        provider: o.provider,
+        model: o.model,
+        source: o.source,
+        discom: fields.find((f) => f.key === "discom")?.value?.trim() || undefined,
+        fieldsTotal: o.originalFields.length,
+        fieldsFound: o.originalFields.filter((f) => f.value.trim() !== "").length,
+        corrections: items,
+      });
+    }
+    setStep("result");
+  }, [fields]);
 
   const stepIndex = step === "result" ? 2 : step === "review" ? 1 : 0;
 
@@ -125,7 +181,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
           notice={notice}
           onChange={updateField}
           onBack={() => setStep("upload")}
-          onNext={() => setStep("result")}
+          onNext={goToResult}
         />
       )}
       {step === "result" && (
@@ -206,7 +262,11 @@ function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
 function FetchPanel({
   onFetched,
 }: {
-  onFetched: (fields: ExtractedField[], note: string) => void;
+  onFetched: (
+    fields: ExtractedField[],
+    note: string,
+    ctx?: { provider: string; source: string },
+  ) => void;
 }) {
   const [billers, setBillers] = React.useState<Biller[] | null>(null);
   const [billerId, setBillerId] = React.useState("");
@@ -236,7 +296,7 @@ function FetchPanel({
     setError(null);
     const out = await billfetch.fetch(biller.id, values);
     setLoading(false);
-    if (out.ok) onFetched(out.fields, out.note);
+    if (out.ok) onFetched(out.fields, out.note, { provider: out.provider, source: out.source });
     else setError(out.note);
   };
 

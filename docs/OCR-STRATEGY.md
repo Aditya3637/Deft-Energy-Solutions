@@ -108,10 +108,12 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
    with no free public API). Returns summary fields into the same review screen; full diagnosis still
    needs the detailed bill. Real biller IDs per DISCOM are filled from the aggregator's directory.
 3. **VLM schema extraction** for photo/scan uploads ✅ *done* (Stage G) — behind the existing
-   review/correct UI; corrections become training data next.
+   review/correct UI; **corrections now captured** (`POST /v1/corrections` logs model value + confidence
+   vs the user's final value, per field) as training data.
 4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
-5. **Live accuracy dashboard** (SPEC_V2 §7 matrix wired to the gold corpus) — so accuracy is a measured,
-   visible number, per DISCOM, not a claim.
+5. **Live accuracy dashboard** ⏳ *data source ready* — `GET /v1/corrections/accuracy` rolls the captured
+   corrections into overall / per-DISCOM / per-field accuracy; the dashboard UI wires SPEC_V2 §7 to it
+   next, so accuracy is a measured, visible number per DISCOM, not a claim.
 
 ## Extraction providers & cost (Stage G — implemented)
 

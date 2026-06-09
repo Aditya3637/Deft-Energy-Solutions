@@ -7,6 +7,20 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G⁴ — corrections-capture loop)
+- **Every reviewed extraction is now logged as training data + an accuracy signal.** When the user moves
+  from review → result, the frontend diffs the model's original values+confidence against the final
+  values and POSTs them (fire-and-forget, non-blocking, skipped for the sample bill).
+- **Backend** `server/src/corrections/`: `POST /v1/corrections` writes an `ExtractionFeedback` row
+  (provider, model, source, discom, fieldsFound/Total, correctedCount, and per-field
+  `{extracted, extractedConfidence, final, corrected}` JSON) via RLS-scoped `withOrg`.
+  `GET /v1/corrections/accuracy` aggregates the recent window into overall / per-DISCOM / per-field
+  accuracy (= 1 − corrections/seen) — the data source for the accuracy dashboard (de-risking step 5).
+- **Schema:** new `ExtractionFeedback` model + RLS policy (`prisma db push` + `rls.sql` apply on boot).
+  Shared `mergeRawFields`/field model reused so all three intake channels feed one capture path.
+- **Frontend:** `lib/api/corrections.ts` (`submit` + `accuracy`); analyze-flow snapshots the pristine
+  extraction (provider/model/source/DISCOM) and emits the diff on continue. No new env.
+
 ### 2026-06-09 (Stage G+++ — BBPS / DISCOM-portal fetch scaffold)
 - **New intake channel: fetch a bill by consumer number** (no upload). `server/src/billfetch/`:
   `GET /v1/billfetch/billers` (DISCOM catalog — 15 majors with required params) + `POST /v1/billfetch`.

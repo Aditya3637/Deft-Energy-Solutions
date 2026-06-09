@@ -18,7 +18,14 @@ const FALLBACK_BILLERS: Biller[] = [
 ];
 
 export type FetchOutcome =
-  | { ok: true; fields: M.ExtractedField[]; note: string; billerName: string }
+  | {
+      ok: true;
+      fields: M.ExtractedField[];
+      note: string;
+      billerName: string;
+      provider: string;
+      source: "bbps" | "bbps-demo";
+    }
   | { ok: false; note: string };
 
 type ServerBillers = { billers: Biller[]; configured: boolean };
@@ -77,7 +84,14 @@ export const billfetch = {
         data.source === "bbps-demo"
           ? `Demo data for ${data.billerName} — connect a BBPS aggregator for live fetch. BBPS returns a summary; upload the full bill for the 58-check diagnosis.`
           : `Fetched a summary from ${data.billerName} via BBPS. For the full 58-check diagnosis, also upload the detailed bill.`;
-      return { ok: true, fields: data.fields, note, billerName: data.billerName };
+      return {
+        ok: true,
+        fields: data.fields,
+        note,
+        billerName: data.billerName,
+        provider: data.provider,
+        source: data.source,
+      };
     } catch {
       return { ok: false, note: "Couldn't reach the bill-fetch service." };
     }
