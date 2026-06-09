@@ -1,0 +1,3 @@
+# Vercel builds the Next.js frontend at the repo root.
+# The backend has its own host (Render) — keep it out of the Vercel build.
+server

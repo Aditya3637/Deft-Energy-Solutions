@@ -1,16 +1,20 @@
 /**
- * Static export for GitHub Pages.
- * The repo is served from https://<user>.github.io/Deft-Energy-Solutions/, so we
- * apply a basePath/assetPrefix in production builds. Local `next dev` stays at root.
+ * Environment-aware build target.
+ * - GitHub Pages (default): static export under /Deft-Energy-Solutions.
+ * - Vercel (sets process.env.VERCEL): SSR/server-components at the root, so the
+ *   app can fetch live data per request once the backend reaches data parity.
  * @type {import('next').NextConfig}
  */
 const repo = "Deft-Energy-Solutions";
 const isProd = process.env.NODE_ENV === "production";
+const onVercel = !!process.env.VERCEL;
+const pagesBuild = isProd && !onVercel;
 
 const nextConfig = {
-  output: "export",
-  basePath: isProd ? `/${repo}` : "",
-  assetPrefix: isProd ? `/${repo}/` : "",
+  // No static export on Vercel — render server components at request time there.
+  output: onVercel ? undefined : "export",
+  basePath: pagesBuild ? `/${repo}` : "",
+  assetPrefix: pagesBuild ? `/${repo}/` : "",
   trailingSlash: true,
   images: { unoptimized: true },
   reactStrictMode: true,

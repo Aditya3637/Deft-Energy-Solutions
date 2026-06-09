@@ -5,11 +5,19 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Frontend ✅ · Stage E backend (engine + persistence + deploy) ✅ · **Stage F wiring ✅ (client-side)**
-- **Stage F:** the `api` seam reads `NEXT_PUBLIC_API_URL`. Unset → fixtures (the Pages demo). Set → client-side
-  actions hit the live API. Wired the clean live path: **/analyze "Save to workspace" → POST /v1/bills**
-  (persists + diagnoses server-side). Server-component pages stay build-time fixtures on the static export
-  until the backend reaches data parity / a non-static host. Deploy build embeds `vars.NEXT_PUBLIC_API_URL`.
+- **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅
+- **Backend is live:** `https://deft-energy-server.onrender.com` (Render free tier — sleeps when idle; free
+  Postgres `deft-postgres`/oregon expires ~90 days). Verified: `/v1/health` 200, RLS-scoped `/v1/buildings`,
+  `POST /v1/bills` persists + auto-runs the 58-check engine (matches the frontend). Fixed an RLS bug on the
+  way (`current_org()` must return `text`, not `uuid`, since Prisma `String @id` is `text`).
+- **Stage F live:** the Pages frontend has `NEXT_PUBLIC_API_URL` set, so `/analyze` → "Save to workspace"
+  persists a real diagnosed bill to the live DB. (Demo stays fixtures when the var is unset.)
+- **Vercel-ready:** `next.config.mjs` is environment-aware — Pages stays static export under the repo
+  basePath; a **Vercel** build (sets `process.env.VERCEL`) runs SSR at root so server pages can fetch live.
+  `.vercelignore` keeps `server/` out of the Vercel build.
+- **Next (live dashboard):** backend **data parity** — enrich Building (12-mo trend), add recent-bills /
+  tasks / alerts endpoints + seed — THEN deploy the frontend to Vercel and switch `api.*` server pages to
+  live fetch. Vercel deploy itself needs the repo connected to Vercel (or a Vercel token).
 - **Workspaces:** frontend (root, → Pages) and **backend (`server/`, NestJS + Prisma + Postgres)** — separate.
   Server CI compile- AND Docker-build-verifies the backend. **Deploy:** `render.yaml` blueprint (managed
   Postgres, auto-deploy) or `docker compose up --build` locally. Final "go live" = connect the repo to
@@ -50,6 +58,15 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Backend LIVE on Render + Vercel-ready)
+- Deployed the backend via the Render API: found the failing deploy (`update_failed`), diagnosed it from
+  logs (RLS `text = uuid`), fixed `current_org()` to return `text`, redeployed → **live**.
+  `https://deft-energy-server.onrender.com`. Verified health, RLS-scoped buildings, and a real diagnosed
+  bill via `POST /v1/bills`. Set the Pages repo var `NEXT_PUBLIC_API_URL` + redeployed → analyze "Save to
+  workspace" is live. (Render API key was used then **revoked** by the user.)
+- Made `next.config.mjs` environment-aware (Pages static export ↔ Vercel SSR) + `.vercelignore`. Pages
+  build unchanged/green. Sets the stage for a live dashboard once the backend reaches data parity.
 
 ### 2026-06-09 (Stage F — wire the seam to the live backend)
 - `lib/api/client.ts` — `getApiBase()`/`isApiConfigured()`/`apiFetch()` reading `NEXT_PUBLIC_API_URL`
