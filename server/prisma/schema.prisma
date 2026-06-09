@@ -1,0 +1,408 @@
+// Deft Energy Solutions — core data model (Stage E).
+// This is the multi-tenant core of the 61-table spec (SPEC_V1 §C). Every
+// org-scoped table carries `orgId`; row-level security (prisma/rls.sql) enforces
+// isolation at the DB. The remaining tables (interval data at scale, full
+// trading/audit/marketplace) layer on in later passes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------- enums
+
+enum Role {
+  OWNER
+  FACILITY_MANAGER
+  ENERGY_MANAGER
+  AUDITOR
+  CFO
+  CEO
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum BuildingType {
+  INDUSTRIAL
+  COMMERCIAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskSource {
+  DIAGNOSIS
+  ALERT
+  AUDIT
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertSeverity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum AlertStatus {
+  NEW
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum CapexStage {
+  FM
+  EM
+  CFO
+  BOARD
+  APPROVED
+  REJECTED
+}
+
+enum FindingStatus {
+  LOSS
+  HEALTHY
+  NEEDS_DATA
+}
+
+enum FindingKind {
+  RECOVERABLE
+  OPPORTUNITY
+}
+
+// ----------------------------------------------------------------- core
+
+model Organisation {
+  id        String   @id @default(uuid())
+  name      String
+  gstin     String?
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+
+  users         User[]
+  buildings     Building[]
+  bills         ElectricityBill[]
+  tasks         Task[]
+  alertRules    AlertRule[]
+  alerts        AlertInstance[]
+  documents     Document[]
+  activity      ActivityLog[]
+  subscriptions Subscription[]
+  capexRequests CapexRequest[]
+  ghgInventory  GhgInventory[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  orgId     String
+  email     String   @unique
+  name      String
+  role      Role     @default(FACILITY_MANAGER)
+  createdAt DateTime @default(now())
+
+  org         Organisation             @relation(fields: [orgId], references: [id])
+  preferences NotificationPreference[]
+
+  @@index([orgId])
+}
+
+model Subscription {
+  id           String    @id @default(uuid())
+  orgId        String
+  plan         Plan
+  status       String    @default("active")
+  startDate    DateTime  @default(now())
+  endDate      DateTime?
+  billingCycle String    @default("monthly")
+  amountInr    Int       @default(0)
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model Building {
+  id                String       @id @default(uuid())
+  orgId             String
+  name              String
+  city              String
+  type              BuildingType
+  discom            String
+  supplyVoltage     String?
+  tariffCategory    String?
+  areaSqft          Int?
+  sanctionedLoadKw  Int?
+  contractDemandKva Int?
+  pf                Float?
+  epi               Float?
+  savingsInr        Int          @default(0)
+  createdAt         DateTime     @default(now())
+
+  org       Organisation      @relation(fields: [orgId], references: [id])
+  zones     BuildingZone[]
+  equipment Equipment[]
+  bills     ElectricityBill[]
+  intervals IntervalReading[]
+
+  @@index([orgId])
+}
+
+model BuildingZone {
+  id         String   @id @default(uuid())
+  buildingId String
+  name       String
+  areaSqft   Int?
+  building   Building @relation(fields: [buildingId], references: [id])
+
+  @@index([buildingId])
+}
+
+model Equipment {
+  id         String   @id @default(uuid())
+  buildingId String
+  name       String
+  type       String
+  ratingKw   Float?
+  building   Building @relation(fields: [buildingId], references: [id])
+
+  @@index([buildingId])
+}
+
+// The 42 extracted fields (SPEC_V1 §A). All nullable — partial extraction is valid.
+model ElectricityBill {
+  id         String   @id @default(uuid())
+  orgId      String
+  buildingId String?
+  fileUrl    String?
+  createdAt  DateTime @default(now())
+
+  consumerNumber       String?
+  consumerName         String?
+  address              String?
+  discom               String?
+  tariffCategory       String?
+  supplyVoltage        String?
+  sanctionedLoadKw     Float?
+  contractDemandKva    Float?
+  billingDemandKva     Float?
+  maxDemandKva         Float?
+  mdDateTime           String?
+  energyKwh            Float?
+  reactiveKvarh        Float?
+  apparentKvah         Float?
+  powerFactor          Float?
+  loadFactorPct        Float?
+  fixedDemandCharges   Float?
+  energyCharges        Float?
+  wheelingCharges      Float?
+  crossSubsidyCharge   Float?
+  additionalSurcharge  Float?
+  pfPenaltyAmt         Float?
+  pfPenaltyRatePct     Float?
+  todPeakKwh           Float?
+  todOffPeakKwh        Float?
+  todNormalKwh         Float?
+  todPeakRate          Float?
+  todOffPeakRate       Float?
+  todShoulderRate      Float?
+  facFppca             Float?
+  electricityDuty      Float?
+  meterRent            Float?
+  transformerLossPct   Float?
+  arrears              Float?
+  latePaymentSurcharge Float?
+  earlyPaymentRebate   Float?
+  netMeteringCredit    Float?
+  totalAmountDue       Float?
+  billDate             String?
+  dueDate              String?
+  billingPeriodDays    Int?
+  meterNumber          String?
+
+  org       Organisation @relation(fields: [orgId], references: [id])
+  building  Building?    @relation(fields: [buildingId], references: [id])
+  diagnosis Diagnosis?
+
+  @@index([orgId])
+  @@index([buildingId])
+}
+
+model Diagnosis {
+  id             String   @id @default(uuid())
+  billId         String   @unique
+  recoverableInr Int      @default(0)
+  opportunityInr Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  bill     ElectricityBill @relation(fields: [billId], references: [id])
+  findings LossFinding[]
+}
+
+model LossFinding {
+  id          String        @id @default(uuid())
+  diagnosisId String
+  checkId     String // e.g. "1.1"
+  category    Int
+  status      FindingStatus
+  kind        FindingKind
+  annualInr   Int?
+  note        String?
+
+  diagnosis Diagnosis @relation(fields: [diagnosisId], references: [id])
+
+  @@index([diagnosisId])
+}
+
+// ------------------------------------------------------ cross-cutting
+
+model Task {
+  id         String     @id @default(uuid())
+  orgId      String
+  title      String
+  building   String
+  source     TaskSource
+  priority   Priority
+  assignee   String
+  due        String
+  savingsInr Int?
+  status     TaskStatus @default(TODO)
+  createdAt  DateTime   @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model AlertRule {
+  id        String        @id @default(uuid())
+  orgId     String
+  name      String
+  condition String
+  severity  AlertSeverity
+  active    Boolean       @default(true)
+
+  org       Organisation    @relation(fields: [orgId], references: [id])
+  instances AlertInstance[]
+
+  @@index([orgId])
+}
+
+model AlertInstance {
+  id        String        @id @default(uuid())
+  orgId     String
+  ruleId    String?
+  title     String
+  building  String
+  detail    String
+  severity  AlertSeverity
+  status    AlertStatus   @default(NEW)
+  triggered DateTime      @default(now())
+
+  org  Organisation @relation(fields: [orgId], references: [id])
+  rule AlertRule?   @relation(fields: [ruleId], references: [id])
+
+  @@index([orgId])
+}
+
+model NotificationPreference {
+  id        String  @id @default(uuid())
+  userId    String
+  channel   String
+  frequency String  @default("realtime")
+  enabled   Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Document {
+  id           String    @id @default(uuid())
+  orgId        String
+  buildingId   String?
+  docType      String
+  name         String
+  fileUrl      String?
+  tags         String[]
+  uploadedById String?
+  version      Int       @default(1)
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  orgId       String
+  userId      String?
+  entityType  String
+  entityId    String
+  action      String
+  detailsJson Json?
+  createdAt   DateTime @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model CapexRequest {
+  id          String     @id @default(uuid())
+  orgId       String
+  project     String
+  building    String
+  amountInr   Int
+  paybackYrs  Float
+  requestedBy String
+  stage       CapexStage @default(FM)
+  createdAt   DateTime   @default(now())
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model GhgInventory {
+  id     String @id @default(uuid())
+  orgId  String
+  year   Int
+  scope1 Int    @default(0)
+  scope2 Int    @default(0)
+  scope3 Int    @default(0)
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+model IntervalReading {
+  id         String   @id @default(uuid())
+  buildingId String
+  ts         DateTime
+  kwh        Float
+  kw         Float?
+  pf         Float?
+
+  building Building @relation(fields: [buildingId], references: [id])
+
+  @@index([buildingId, ts])
+}

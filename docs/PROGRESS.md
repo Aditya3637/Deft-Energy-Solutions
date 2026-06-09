@@ -5,7 +5,9 @@
 ## Current state
 
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
-- **Active stage:** Stage B ✅ · Stage D seam ✅ · **Stage C interaction polish ✅ DONE**
+- **Active stage:** Frontend (A–D + C + journey) ✅ · **Stage E backend foundation ✅ DONE (started)**
+- **Workspaces:** frontend (root, → Pages) and **backend (`server/`, NestJS + Prisma + Postgres)** — separate;
+  backend doesn't deploy to Pages. Two CI workflows: Pages deploy (frontend) + **Server CI** (compile-verify).
 - **Hosting:** GitHub Actions → static export → GitHub Pages. The build runs on GitHub's runners (so it
   also verifies the code compiles, since this laptop has no Node). Live URL:
   https://aditya3637.github.io/Deft-Energy-Solutions/
@@ -42,6 +44,21 @@
 - Marketing CTAs `/pricing`, `/privacy`, `/terms` are later-stage routes — currently a graceful 404.
 
 ## Log
+
+### 2026-06-09 (Stage E — backend foundation)
+- Scaffolded the **`server/`** workspace: NestJS 10 + Prisma 5 + PostgreSQL. Separate from the frontend
+  (does not deploy to Pages); excluded from the root tsconfig so the Pages build is unaffected.
+- **Prisma schema** — multi-tenant core of the 61-table model: organisations, users, buildings (+zones,
+  equipment), the **42-field `ElectricityBill`**, diagnoses & loss findings, tasks, alerts, documents,
+  activity log, CAPEX, GHG, interval readings. Every org-scoped table has `orgId`.
+- **Row-level security** (`prisma/rls.sql`) — DB-enforced tenant isolation; `PrismaService.withOrg()` sets
+  `app.current_org` per transaction.
+- **Modules** — health, buildings (list/by-id), bills (POST 42-field DTO + list/by-id) — mirror the
+  frontend `api.portfolio` / `api.bills` contracts. Seed creates the demo org + buildings + a sample bill.
+- **Server CI** workflow compiles it on GitHub runners (`prisma validate` + `generate` + `tsc`) — my only
+  way to verify the backend without Node locally.
+- Next: port the 58-check diagnosis engine server-side, add auth (real tenant from JWT), then Stage F
+  (wire the frontend `lib/api/*` bodies to these endpoints).
 
 ### 2026-06-09 (Conversion-journey audit + fixes)
 - Audited the delivered build (see [CUSTOMER-JOURNEY.md](./CUSTOMER-JOURNEY.md)); fixed the two real

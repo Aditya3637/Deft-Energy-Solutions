@@ -12,6 +12,13 @@ Web app for Deft Energy Solutions — built with [Next.js](https://nextjs.org) (
 - [`docs/PROGRESS.md`](docs/PROGRESS.md) — living progress log, updated each session
 - [`docs/BILL-ENGINE.md`](docs/BILL-ENGINE.md) — the 58-check diagnosis engine (field + formula per check)
 - [`docs/OCR-STRATEGY.md`](docs/OCR-STRATEGY.md) — bill ingestion & OCR strategy (OCR is Stage G; today simulated)
+- [`docs/CUSTOMER-JOURNEY.md`](docs/CUSTOMER-JOURNEY.md) — conversion journey + audit findings
+
+## Workspaces
+
+- **Frontend** (repo root) — Next.js app, deployed to GitHub Pages.
+- **Backend** ([`server/`](server/)) — NestJS + Prisma + PostgreSQL (Stage E). Separate workspace; does
+  not deploy to Pages. Compile-verified by its own [Server CI](.github/workflows/server-ci.yml).
 
 **Design North Star:** intuitive, simple, minimum friction. Core loop = *upload a bill → instant diagnosis →
 quantified savings → one recommended action.* Designed for ~50,000 bills/month and ~5,000 monthly users.
