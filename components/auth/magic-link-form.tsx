@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { MailCheck } from "lucide-react";
+import Link from "next/link";
+import { MailCheck, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +29,15 @@ export function MagicLinkForm() {
           <MailCheck className="h-6 w-6" />
         </span>
         <p className="text-sm">
-          If <span className="font-medium text-foreground">{email}</span> has an account, a magic
-          link is on its way. Check your inbox.
+          A magic link is on its way to{" "}
+          <span className="font-medium text-foreground">{email}</span>. While you wait, jump straight
+          into your workspace — no need to sign in to explore.
         </p>
+        <Button asChild className="w-full">
+          <Link href="/app">
+            Continue to your workspace <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
         <Button variant="link" className="h-auto p-0" onClick={() => setSent(false)}>
           Use a different email
         </Button>

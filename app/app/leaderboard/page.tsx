@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
@@ -87,9 +87,15 @@ export default async function LeaderboardPage() {
                   <span className="flex items-center gap-2 text-sm">
                     <Gift className="h-4 w-4 text-muted-foreground" /> {r.name}
                   </span>
-                  <Button variant="outline" size="sm" disabled={REWARDS.points < r.cost}>
+                  <DemoButton
+                    variant="outline"
+                    size="sm"
+                    disabled={REWARDS.points < r.cost}
+                    toastTitle="Reward redeemed"
+                    toastDescription={`${r.name} — applied to your account (demo).`}
+                  >
                     {formatIndianNumber(r.cost)} pts
-                  </Button>
+                  </DemoButton>
                 </div>
               ))}
             </CardContent>

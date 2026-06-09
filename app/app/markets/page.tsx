@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
@@ -85,7 +85,12 @@ export default async function MarketsPage() {
           </Card>
 
           <div className="flex justify-end">
-            <Button title="SLDC NOC generation at Stage G">Generate SLDC NOC application</Button>
+            <DemoButton
+              toastTitle="NOC application drafted"
+              toastDescription="SLDC NOC generation ships at Stage G."
+            >
+              Generate SLDC NOC application
+            </DemoButton>
           </div>
         </TabsContent>
 

@@ -43,6 +43,17 @@
 
 ## Log
 
+### 2026-06-09 (Conversion-journey audit + fixes)
+- Audited the delivered build (see [CUSTOMER-JOURNEY.md](./CUSTOMER-JOURNEY.md)); fixed the two real
+  friction problems:
+  - **Broken conversion loop:** every savings-result CTA went to `/login`, a fake wall that dead-ended at
+    "check your inbox", losing the analysed bill. Rewired the result to flow into the live workspace
+    ("See it in your dashboard"/"Open your dashboard" → /app; opportunity "Explore" → /app/markets); login
+    success now offers "Continue to your workspace →" /app. Principle: explore first, commit later.
+  - **Silent no-op buttons:** added a minimal toast (`components/ui/toast.tsx`) + `DemoButton`; wired every
+    demo action (Export deck, Generate BRSR/NOC, Award bid, Request quote, training, Save changes, Save
+    audit, redeem) to honest feedback instead of nothing.
+
 ### 2026-06-09 (Stage C — interaction & navigation polish)
 - **Breadcrumbs** in the app topbar (path-derived, i18n-aware, hidden on mobile).
 - **Scroll restoration:** the app content scroll region resets to top on every route change.

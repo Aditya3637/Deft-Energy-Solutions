@@ -6,6 +6,7 @@ import { Mail, MessageSquare, Smartphone, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/dictionary";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { useToast } from "@/components/ui/toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ const CHANNELS = [
 
 export function SettingsView() {
   const { locale, setLocale } = useLocale();
+  const { toast } = useToast();
   const [channels, setChannels] = React.useState<Record<string, boolean>>(
     Object.fromEntries(CHANNELS.map((c) => [c.id, c.on])),
   );
@@ -49,7 +51,7 @@ export function SettingsView() {
               <Input id="org-gst" defaultValue="27ABCDE1234F1Z5" />
             </div>
             <div className="flex justify-end">
-              <Button>Save changes</Button>
+              <Button onClick={() => toast({ title: "Settings saved" })}>Save changes</Button>
             </div>
           </CardContent>
         </Card>

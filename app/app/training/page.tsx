@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { api } from "@/lib/api";
@@ -49,9 +49,14 @@ export default async function TrainingPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{c.progressPct}% complete</span>
-                <Button variant="outline" size="sm">
+                <DemoButton
+                  variant="outline"
+                  size="sm"
+                  toastTitle={`Opening “${c.title}”`}
+                  toastDescription="Course player ships with the learning service."
+                >
                   {c.progressPct === 0 ? "Start" : c.progressPct === 100 ? "Review" : "Continue"}
-                </Button>
+                </DemoButton>
               </div>
             </CardContent>
           </Card>

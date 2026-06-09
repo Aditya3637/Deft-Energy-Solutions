@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +26,9 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <LocaleProvider>{children}</LocaleProvider>
+        <LocaleProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

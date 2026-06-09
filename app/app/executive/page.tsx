@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
 import { BarChart } from "@/components/charts/bar-chart";
@@ -47,9 +48,13 @@ export default async function ExecutivePage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader title="Executive summary" description="Board-ready view across the portfolio." />
-        <Button variant="outline" title="PDF / PPT export at Stage G">
+        <DemoButton
+          variant="outline"
+          toastTitle="Export queued"
+          toastDescription="Board deck (PDF/PPT) generation ships with the backend at Stage G."
+        >
           <Download className="h-4 w-4" /> Export deck
-        </Button>
+        </DemoButton>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

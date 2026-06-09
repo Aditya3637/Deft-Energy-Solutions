@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 import { SyncStatus } from "@/components/field/sync-status";
 import { AUDIT_META, AUDIT_SECTIONS, type Measurement } from "@/lib/api/field";
 
 export function AuditCapture({ measurements }: { measurements: Measurement[] }) {
+  const { toast } = useToast();
   const [values, setValues] = React.useState<Record<string, string>>({});
   const [photos, setPhotos] = React.useState(0);
   const [location, setLocation] = React.useState<string | null>(null);
@@ -88,7 +90,11 @@ export function AuditCapture({ measurements }: { measurements: Measurement[] }) 
         </Button>
       </div>
 
-      <Button className="w-full" size="lg">
+      <Button
+        className="w-full"
+        size="lg"
+        onClick={() => toast({ title: "Audit saved on device", description: `${filled}/${total} readings captured — syncs to the report builder.` })}
+      >
         Save audit ({filled}/{total} captured)
       </Button>
       <p className="pb-2 text-center text-xs text-muted-foreground">

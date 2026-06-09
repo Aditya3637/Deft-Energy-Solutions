@@ -338,7 +338,9 @@ function ResultStep({
                 {formatRupeesCompact(diag.top[0].annualINR ?? 0)}/yr
               </span>
               <Button asChild>
-                <Link href="/login">Save &amp; add to plan</Link>
+                <Link href="/app">
+                  See it in your dashboard <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -394,7 +396,7 @@ function ResultStep({
                     <div className="text-xs text-muted-foreground">potential</div>
                   </div>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/login">Explore</Link>
+                    <Link href="/app/markets">Explore</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -505,7 +507,9 @@ function ResultStep({
             <RotateCcw className="h-4 w-4" /> Analyze another
           </Button>
           <Button asChild>
-            <Link href="/login">Save this analysis</Link>
+            <Link href="/app">
+              Open your dashboard <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>

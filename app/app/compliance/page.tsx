@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -136,7 +136,12 @@ export default async function CompliancePage() {
                 </div>
               ))}
               <div className="flex justify-end pt-2">
-                <Button title="PDF export at Stage G">Generate BRSR report</Button>
+                <DemoButton
+                  toastTitle="BRSR report generating"
+                  toastDescription="Auto-filled from your energy data; PDF export ships at Stage G."
+                >
+                  Generate BRSR report
+                </DemoButton>
               </div>
             </CardContent>
           </Card>

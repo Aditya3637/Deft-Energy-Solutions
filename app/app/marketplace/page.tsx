@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/ui/demo-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app/page-header";
 import { api } from "@/lib/api";
@@ -53,7 +53,9 @@ export default async function MarketplacePage() {
                   </div>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">{v.jobs} jobs completed</span>
-                    <Button variant="outline" size="sm">Request quote</Button>
+                    <DemoButton variant="outline" size="sm" toastTitle="Quote requested" toastDescription={`We'll route your RFQ to ${v.name}.`}>
+                      Request quote
+                    </DemoButton>
                   </div>
                 </CardContent>
               </Card>
@@ -111,7 +113,9 @@ export default async function MarketplacePage() {
             </CardContent>
           </Card>
           <div className="flex justify-end">
-            <Button title="Award workflow at Stage F">Award to best bid</Button>
+            <DemoButton toastTitle="Bid awarded" toastDescription="Purchase-order workflow ships at Stage F.">
+              Award to best bid
+            </DemoButton>
           </div>
         </TabsContent>
       </Tabs>
