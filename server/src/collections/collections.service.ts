@@ -9,7 +9,7 @@ import { selectConnector } from "./connector";
 const inr = (paise: bigint | number): number => paiseToRupees(Number(paise));
 
 type LicenseRow = {
-  id: string; discom: string; mode: string; aggregator: string; status: string;
+  id: string; discom: string; billerId: string; mode: string; aggregator: string; status: string;
   commissionType: string; commissionPerTxnPaise: bigint; commissionRateBps: number;
   commissionCurrentBps: number; commissionOutstandingBps: number;
   commissionCapPaise: bigint; commissionMinPaise: bigint; settlementCycle: string; floatPaise: bigint;
@@ -45,48 +45,84 @@ export class CollectionsService {
     }));
   }
 
-  /** Record a consumer payment (idempotent), compute commission, settle the bill. */
+  /**
+   * Record a consumer payment (idempotent), compute commission, settle the bill.
+   * For BBPS-mode licenses the payment is moved through the rail (mock unless
+   * COLLECTIONS_LIVE + creds) BEFORE persisting; the rail dedupes on referenceId
+   * (= our idempotencyKey) so a retry can never double-pay. DIRECT/MANUAL just
+   * record (money collected offline / to escrow). The DB unique on
+   * (orgId, idempotencyKey) prevents a double *record*.
+   */
   async create(orgId: string, dto: CreateCollectionDto) {
-    return this.prisma.withOrg(orgId, async (tx) => {
-      const existing = await tx.collection.findUnique({
-        where: { orgId_idempotencyKey: { orgId, idempotencyKey: dto.idempotencyKey } },
+    const find = () =>
+      this.prisma.withOrg(orgId, (tx) =>
+        tx.collection.findUnique({ where: { orgId_idempotencyKey: { orgId, idempotencyKey: dto.idempotencyKey } } }),
+      );
+
+    const existing = await find();
+    if (existing) return this.mapCollection(existing); // no double-collect
+
+    const license = (await this.prisma.withOrg(orgId, (tx) =>
+      tx.discomLicense.findUnique({ where: { id: dto.licenseId } }),
+    )) as LicenseRow | null;
+    if (!license) throw new NotFoundException(`License ${dto.licenseId} not found`);
+
+    const amountP = rupeesToPaise(dto.amountInr);
+    const commP = commissionPaise(modelOf(license), amountP, dto.isOutstanding ?? false);
+
+    // Move money on the rail for BBPS; outside the txn (network call).
+    let status: "CONFIRMED" | "INITIATED" | "FAILED" = "CONFIRMED";
+    let providerRef = "";
+    if (license.mode === "BBPS") {
+      const res = await selectConnector(license.mode as never, license.aggregator).payBill({
+        billerId: license.billerId,
+        consumerParams: dto.consumerNumber ? { consumerNumber: dto.consumerNumber } : {},
+        amountPaise: amountP,
+        referenceId: dto.idempotencyKey,
       });
-      if (existing) return this.mapCollection(existing); // no double-collect
+      providerRef = res.providerRef;
+      status = res.status === "SUCCESS" ? "CONFIRMED" : res.status === "PENDING" ? "INITIATED" : "FAILED";
+    }
 
-      const license = (await tx.discomLicense.findUnique({ where: { id: dto.licenseId } })) as LicenseRow | null;
-      if (!license) throw new NotFoundException(`License ${dto.licenseId} not found`);
-
-      const amountP = rupeesToPaise(dto.amountInr);
-      const commP = commissionPaise(modelOf(license), amountP, dto.isOutstanding ?? false);
-
-      const created = await tx.collection.create({
-        data: {
-          orgId,
-          licenseId: dto.licenseId,
-          billId: dto.billId ?? null,
-          consumerNumber: dto.consumerNumber ?? "",
-          amountPaise: BigInt(amountP),
-          isOutstanding: dto.isOutstanding ?? false,
-          method: dto.method as never,
-          status: "CONFIRMED",
-          idempotencyKey: dto.idempotencyKey,
-          commissionPaise: BigInt(commP),
-          collectedAt: new Date(),
-        },
-      });
-
-      // Settle the underlying obligation on the payments layer.
-      if (dto.billId) {
-        const bill = await tx.electricityBill.findUnique({ where: { id: dto.billId }, select: { id: true } });
-        if (bill) {
-          await tx.electricityBill.update({
-            where: { id: dto.billId },
-            data: { paidAt: new Date(), paidAmount: dto.amountInr },
-          });
+    try {
+      const created = await this.prisma.withOrg(orgId, async (tx) => {
+        const c = await tx.collection.create({
+          data: {
+            orgId,
+            licenseId: dto.licenseId,
+            billId: dto.billId ?? null,
+            consumerNumber: dto.consumerNumber ?? "",
+            amountPaise: BigInt(amountP),
+            isOutstanding: dto.isOutstanding ?? false,
+            method: dto.method as never,
+            status,
+            idempotencyKey: dto.idempotencyKey,
+            providerRef,
+            commissionPaise: BigInt(commP),
+            collectedAt: new Date(),
+          },
+        });
+        // Settle the obligation only when the money is actually in hand.
+        if (status === "CONFIRMED" && dto.billId) {
+          const bill = await tx.electricityBill.findUnique({ where: { id: dto.billId }, select: { id: true } });
+          if (bill) {
+            await tx.electricityBill.update({
+              where: { id: dto.billId },
+              data: { paidAt: new Date(), paidAmount: dto.amountInr },
+            });
+          }
         }
-      }
+        return c;
+      });
       return this.mapCollection(created);
-    });
+    } catch (err) {
+      // Lost a concurrent race on the unique key → return the winner.
+      if (err && typeof err === "object" && (err as { code?: string }).code === "P2002") {
+        const won = await find();
+        if (won) return this.mapCollection(won);
+      }
+      throw err;
+    }
   }
 
   /**

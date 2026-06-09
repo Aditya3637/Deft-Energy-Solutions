@@ -218,12 +218,16 @@ in PROGRESS.md rather than blocking.
       (consumer → escrow → DISCOM; commission → us). No money sits on our books.
 - [ ] **G7.4 Certification / UAT:** complete the BBPOU + NPCI test suite (bill-fetch + bill-pay cases) per
       DISCOM biller; obtain real **biller IDs** → fill `server/src/billfetch/biller-catalog.ts`.
-- [ ] **G7.5 Connect the code (seam already there):**
-      - implement the `bbps` connector (`connector.ts`) + the live `billfetch`/`extract` providers against
-        the chosen aggregator's API; store creds as secrets (env), never in the repo;
-      - set `COLLECTIONS_LIVE=1`; flip each `DiscomLicense` `SANDBOX → ACTIVE` only after its certification;
-      - wire **settlement reconciliation (DSR)**: match the aggregator/DISCOM daily settlement file to our
-        `Remittance` rows; surface mismatches.
+- [~] **G7.5 Connect the code (IN PROGRESS):**
+      - [x] `bbps` connector **implemented** (`connector-bbps.ts`, Setu-style: OAuth token, async
+        fetch/pay, paise, tolerant parsing) and wired into `create()` (BBPS-mode → `payBill` before
+        persist, idempotent via the rail's txn reference). Env-gated by `COLLECTIONS_LIVE` + `BBPS_*`;
+        defaults to `mock`. **Not yet run against a live sandbox — needs creds (G7.2/7.4).**
+      - [ ] obtain sandbox creds → set `BBPS_*` secrets; confirm the exact endpoints/field names against
+        the chosen aggregator's live docs (they vary) and adjust the mapping;
+      - [ ] flip each `DiscomLicense` `SANDBOX → ACTIVE` only after its certification;
+      - [ ] wire **settlement reconciliation (DSR)**: match the aggregator/DISCOM daily settlement file to
+        our `Remittance` rows; surface mismatches.
 - [ ] **G7.6 Operate:** refunds/chargebacks, dispute handling, commission invoicing/reconciliation,
       immutable audit trail, per-DISCOM monitoring, and the field collection route (`/field/collection`)
       wired to live worklist + proof-of-payment.

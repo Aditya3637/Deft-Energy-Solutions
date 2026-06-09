@@ -7,6 +7,22 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (G7.5 — BBPS aggregator connector wired, env-gated)
+- **Implemented the real `bbps` connector** (`server/src/collections/connector-bbps.ts`) against the Setu
+  Bharat Connect shape: OAuth client-credentials token (cached), async **fetch/pay (request → poll
+  response)**, amounts in **paise**, tolerant status/ref parsing (works across Setu/Cashfree/BillAvenue
+  shapes with env tweaks). Never throws — returns FAILED so the caller records the attempt.
+- **Wired into `collections.create()`:** for **BBPS-mode** licenses the payment is moved on the rail via
+  `payBill` *before* persisting; status maps SUCCESS→CONFIRMED / PENDING→INITIATED / FAILED, and the bill
+  is settled (payments layer) only when CONFIRMED. **Idempotent at the rail** (our `idempotencyKey` is the
+  txn reference, so a retry can't double-pay) and in the DB (unique `(orgId, idempotencyKey)`, P2002 race
+  handled). Connector call is outside the DB txn.
+- **Gated by `COLLECTIONS_LIVE` + `BBPS_*` secrets** (`selectConnector`); defaults to `mock`, so nothing
+  changes until real sandbox creds are set. Env documented in `.env.example` + `render.yaml` (sync:false).
+- **Honest:** not yet run against a live sandbox from here — that needs the agent onboarding + UAT creds,
+  and the exact endpoints/field names must be confirmed at certification (PLAN §7 G7.4). PLAN G7.5 marked
+  in-progress (connector built ✓).
+
 ### 2026-06-09 (Plan review — added the BBPS-licence / real-money go-live track)
 - **Reviewed PLAN.md vs reality.** Stages A–F effectively complete; Stage G in progress: extraction
   (code-complete, needs key), BBPS-fetch scaffold, payments ✅, collection-agent backend ✅ (sandbox).

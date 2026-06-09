@@ -38,3 +38,17 @@ services:
       # set "bbps" + BILLFETCH_BASE_URL/BILLFETCH_API_KEY (dashboard) for a real aggregator.
       - key: BILLFETCH_PROVIDER
         value: "mock"
+      # Collection-agent BBPS rail. OFF until a real Agent-Institution sandbox is
+      # wired (PLAN §7). Set COLLECTIONS_LIVE + BBPS_* secrets in the dashboard.
+      - key: COLLECTIONS_LIVE
+        sync: false
+      - key: BBPS_BASE_URL
+        sync: false
+      - key: BBPS_CLIENT_ID
+        sync: false
+      - key: BBPS_CLIENT_SECRET
+        sync: false
+      - key: BBPS_PRODUCT_INSTANCE_ID
+        sync: false
+      - key: BBPS_AGENT_ID
+        sync: false
