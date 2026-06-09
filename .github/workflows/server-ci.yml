@@ -16,6 +16,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Dummy URL so Prisma can parse the schema; validate/generate/build don't connect.
+    env:
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db?schema=public"
     defaults:
       run:
         working-directory: server
