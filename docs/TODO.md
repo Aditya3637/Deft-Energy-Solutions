@@ -57,7 +57,14 @@
      fabrication when data is absent; external inputs (IEX price, CCC spot) labelled *indicative* in the
      UI pending the Stage-G feeds. CI invariant `markets-check.ts` over multi-DISCOM personas.
      *Deferred:* live IEX day-ahead feed + carbon-credit registry (Stage-G integrations).
-   - Still mock: **B7** marketplace / training / leaderboard; capex.
+   - ✅ **B7 — Leaderboard / Marketplace / Training** — `GET /v1/leaderboard` (badges earned from real
+     PF / trend / avoided-emissions / on-time-payment data; reward points from a transparent activity
+     ledger), `GET /v1/marketplace` (curated vendor directory + **RFQs from the org's real
+     `CapexRequest` records** + reverse auction on the top open RFQ), `GET /v1/training` (curated course
+     library). Honest empty states: no vendor-bidding system yet → 0 bids; no progress store yet →
+     courses at 0%. CI invariant `ecosystem-check.ts` over multi-DISCOM personas.
+     *Deferred:* vendor-bidding/RFQ workflow (Stage F), per-learner course-progress store.
+   - Still mock: **capex** (CapexRequest exists server-side — quick win next).
 
 ---
 

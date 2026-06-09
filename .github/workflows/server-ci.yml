@@ -47,6 +47,8 @@ jobs:
         run: npx ts-node --transpile-only scripts/compliance-check.ts
       - name: Energy-markets & DER invariants
         run: npx ts-node --transpile-only scripts/markets-check.ts
+      - name: Ecosystem (badges / RFQs / rewards) invariants
+        run: npx ts-node --transpile-only scripts/ecosystem-check.ts
 
   docker:
     runs-on: ubuntu-latest

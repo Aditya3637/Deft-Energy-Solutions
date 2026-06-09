@@ -24,7 +24,9 @@ export default async function MarketplacePage() {
     api.ecosystem.rfqs(),
     api.ecosystem.reverseAuction(),
   ]);
-  const lowestTco = Math.min(...REVERSE_AUCTION.bids.map((b) => b.tcoINR));
+  const lowestTco = REVERSE_AUCTION.bids.length
+    ? Math.min(...REVERSE_AUCTION.bids.map((b) => b.tcoINR))
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -89,6 +91,11 @@ export default async function MarketplacePage() {
               <CardDescription>Sealed bids ranked by total cost of ownership · closes in {REVERSE_AUCTION.closesIn}</CardDescription>
             </CardHeader>
             <CardContent className="divide-y">
+              {REVERSE_AUCTION.bids.length === 0 && (
+                <p className="py-2 text-sm text-muted-foreground">
+                  No bids yet — invite vendors to bid on this request. Competitive bidding ships at Stage F.
+                </p>
+              )}
               {REVERSE_AUCTION.bids
                 .slice()
                 .sort((a, b) => a.tcoINR - b.tcoINR)

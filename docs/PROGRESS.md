@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Breadth #7 — B7 Ecosystem wired to live data)
+- **Leaderboard, Marketplace and Training now run on real data / real catalogs.** New
+  `server/src/ecosystem/` (`ecosystem.compute.ts` pure/DB-free; `ecosystem.catalog.ts` curated content):
+  - `GET /v1/leaderboard` — **badges earned from real signals** (PF > 0.95 across sites; ≥10% spend
+    reduction from the 12-month trend; ≥1,000 tCO₂e avoided; 12 bills paid on time). "Audit Ace" stays
+    unearned (no audit module yet — honest). **Reward points** from a transparent ledger over real
+    activity (on-time bills, tasks done, badges, savings) → tier.
+  - `GET /v1/marketplace` — **curated vendor directory** (global platform content) + **RFQs derived
+    from the org's real `CapexRequest` records** (category inferred, status from approval stage) +
+    a reverse auction on the top open RFQ. No bidding system yet → **0 bids / empty auction** (honest;
+    the page shows an empty state, guarded against `Math.min` of no bids).
+  - `GET /v1/training` — **curated course library**; progress 0 until a per-learner store exists.
+- **Frontend** `lib/api/ecosystem.ts` live-fetches once per render (React `cache`), fixture fallback
+  off-server. Feeds `/leaderboard`, `/marketplace`, `/training`.
+- **Customer-angle test** `scripts/ecosystem-check.ts` (CI): personas across MSEDCL/BESCOM/TANGEDCO —
+  high-performer, laggard, carbon-heavy, capex→RFQ mapping, and brand-new — asserting badges earn only
+  on real evidence, the points formula, RFQ category/status mapping, and honest empty states.
+
 ### 2026-06-09 (Breadth #7 — B6 Markets & assets wired to live data)
 - **Carbon, Markets and Assets now derive from the org's real data.** New `server/src/markets/`
   (`markets.compute.ts` is pure/DB-free → CI-testable):
