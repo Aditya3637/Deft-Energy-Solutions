@@ -10,6 +10,7 @@ import { PortfolioModule } from "./portfolio/portfolio.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { AlertsModule } from "./alerts/alerts.module";
 import { ExtractModule } from "./extract/extract.module";
+import { BillFetchModule } from "./billfetch/billfetch.module";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ExtractModule } from "./extract/extract.module";
     TasksModule,
     AlertsModule,
     ExtractModule,
+    BillFetchModule,
   ],
   controllers: [HealthController],
 })

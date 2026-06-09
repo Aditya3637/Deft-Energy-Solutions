@@ -34,3 +34,7 @@ services:
       # set claude-haiku-4-5 to trade some accuracy for ~5x lower cost at volume.
       - key: EXTRACT_MODEL
         value: "claude-opus-4-8"
+      # BBPS / DISCOM-portal fetch. "mock" = built-in demo summary (no account);
+      # set "bbps" + BILLFETCH_BASE_URL/BILLFETCH_API_KEY (dashboard) for a real aggregator.
+      - key: BILLFETCH_PROVIDER
+        value: "mock"

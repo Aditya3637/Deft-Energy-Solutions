@@ -16,11 +16,14 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
+  Zap,
+  Search,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, bills, type ExtractedField } from "@/lib/api/bills";
 import { extract } from "@/lib/api/extract";
+import { billfetch, type Biller } from "@/lib/api/billfetch";
 import { arithmeticChecks, type BillCheck } from "@/lib/bill-checks";
 import { useToast } from "@/components/ui/toast";
 import { fullDiagnose } from "@/lib/diagnosis";
@@ -80,6 +83,14 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
     [],
   );
 
+  // BBPS / DISCOM-portal fetch (Stage G). Lands on the same review screen; the
+  // panel handles its own loading/errors and only calls this on success.
+  const onFetched = React.useCallback((fetched: ExtractedField[], note: string) => {
+    setFields(fetched.map((f) => ({ ...f })));
+    setNotice(note);
+    setStep("review");
+  }, []);
+
   const reset = React.useCallback(() => {
     setFields(sampleFields.map((f) => ({ ...f })));
     setNotice(null);
@@ -101,7 +112,12 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         <Stepper current={stepIndex as 0 | 1 | 2} />
       </div>
 
-      {step === "upload" && <UploadStep onPick={runExtract} />}
+      {step === "upload" && (
+        <div className="space-y-6">
+          <UploadStep onPick={runExtract} />
+          <FetchPanel onFetched={onFetched} />
+        </div>
+      )}
       {step === "extracting" && <ExtractingStep />}
       {step === "review" && (
         <ReviewStep
@@ -182,6 +198,117 @@ function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
         backend? We fall back to a sample bill — see <code>docs/OCR-STRATEGY.md</code>.
       </p>
     </div>
+  );
+}
+
+/* ------------------------------------------------------- Fetch (BBPS) */
+
+function FetchPanel({
+  onFetched,
+}: {
+  onFetched: (fields: ExtractedField[], note: string) => void;
+}) {
+  const [billers, setBillers] = React.useState<Biller[] | null>(null);
+  const [billerId, setBillerId] = React.useState("");
+  const [values, setValues] = React.useState<Record<string, string>>({});
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    billfetch.billers().then((r) => {
+      if (!alive) return;
+      setBillers(r.billers);
+      if (r.billers[0]) setBillerId(r.billers[0].id);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const biller = billers?.find((b) => b.id === billerId);
+  const canSubmit =
+    !!biller && biller.params.every((p) => (values[p.name] ?? "").trim().length > 0);
+
+  const submit = async () => {
+    if (!biller || loading) return;
+    setLoading(true);
+    setError(null);
+    const out = await billfetch.fetch(biller.id, values);
+    setLoading(false);
+    if (out.ok) onFetched(out.fields, out.note);
+    else setError(out.note);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Zap className="h-4 w-4 text-primary" />
+          Or fetch it from your provider
+        </CardTitle>
+        <CardDescription>
+          Pull the latest bill summary by consumer number via BBPS — no upload needed. Best for a quick
+          check; upload the full bill for the complete 58-check diagnosis.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="discom" className="text-muted-foreground">
+              Electricity board (DISCOM)
+            </Label>
+            <select
+              id="discom"
+              value={billerId}
+              onChange={(e) => {
+                setBillerId(e.target.value);
+                setValues({});
+                setError(null);
+              }}
+              disabled={!billers}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            >
+              {!billers && <option>Loading…</option>}
+              {billers?.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.discom} — {b.state}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {biller?.params.map((p) => (
+            <div key={p.name} className="space-y-1.5">
+              <Label htmlFor={p.name} className="text-muted-foreground">
+                {p.label}
+              </Label>
+              <Input
+                id={p.name}
+                inputMode="numeric"
+                placeholder={p.placeholder}
+                value={values[p.name] ?? ""}
+                onChange={(e) =>
+                  setValues((v) => ({ ...v, [p.name]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="text-muted-foreground">{error}</span>
+          </div>
+        )}
+
+        <Button onClick={submit} disabled={!canSubmit || loading}>
+          <Search className="h-4 w-4" />
+          {loading ? "Fetching…" : "Fetch my bill"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

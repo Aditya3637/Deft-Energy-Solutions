@@ -7,6 +7,21 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G+++ — BBPS / DISCOM-portal fetch scaffold)
+- **New intake channel: fetch a bill by consumer number** (no upload). `server/src/billfetch/`:
+  `GET /v1/billfetch/billers` (DISCOM catalog — 15 majors with required params) + `POST /v1/billfetch`.
+  Provider seam (`BILLFETCH_PROVIDER`): `mock` (built-in demo summary, default — works on the live
+  backend with no account) or `bbps` (generic env-configured aggregator adapter; BBPS is NPCI-run with
+  no free public API — go through Setu/Cashfree/Razorpay/Decentro/etc.). Returns BBPS summary fields
+  (amount, due date, name, energy) merged into the same 42-row review screen via the shared
+  `mergeRawFields` (factored out of the extract service into `extract/fields.ts`).
+- **Frontend:** `lib/api/billfetch.ts` + a `FetchPanel` on `/analyze` (DISCOM select + consumer-number
+  input → fetch → review). Honest UI note: demo vs live, and "BBPS returns a summary; upload the full
+  bill for the 58-check diagnosis."
+- **Honest framing:** BBPS fetch is a *summary* channel (validation + collections), not full extraction;
+  and there's no free public BBPS API — real fetch needs a paid aggregator account + biller IDs.
+  Docs: `.env.example`, `render.yaml` (`BILLFETCH_PROVIDER=mock`), OCR-STRATEGY de-risking step 2.
+
 ### 2026-06-09 (Stage G++ — digital-PDF text-parse path)
 - **Free path for born-digital PDFs.** `server/src/extract/pdf-text.ts` reads the PDF text layer locally
   with `pdf-parse` (pure JS, no native deps, no API). If the layer is usable (`hasUsableText`: ≥120

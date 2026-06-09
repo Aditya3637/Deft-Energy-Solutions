@@ -101,7 +101,12 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
    sanity checks validate the result. Covers digital-PDF consumers first, and is the genuinely-free PDF
    path on the `openai`/Llama provider (which otherwise takes images only). Scanned PDFs (no text layer)
    fall back to the vision path.
-2. **BBPS / portal fetch** for structured summary data and cross-validation.
+2. **BBPS / portal fetch** for structured summary data and cross-validation ✅ *scaffolded* —
+   `server/src/billfetch/`: `GET /v1/billfetch/billers` (DISCOM catalog) + `POST /v1/billfetch` (fetch a
+   summary by consumer number). Provider seam: `mock` (built-in demo summary, default) or `bbps` (a
+   generic, env-configured aggregator adapter — Setu/Cashfree/Razorpay/Decentro/etc.; BBPS is NPCI-run
+   with no free public API). Returns summary fields into the same review screen; full diagnosis still
+   needs the detailed bill. Real biller IDs per DISCOM are filled from the aggregator's directory.
 3. **VLM schema extraction** for photo/scan uploads ✅ *done* (Stage G) — behind the existing
    review/correct UI; corrections become training data next.
 4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
