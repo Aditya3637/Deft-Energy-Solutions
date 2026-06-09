@@ -87,7 +87,9 @@ export type OpenAccess = {
 };
 
 export type CarbonCredits = {
-  estimated: boolean; // true → potential from avoided emissions, not a registry holding
+  /** "estimated" → potential from avoided emissions · "registry" → live holdings. */
+  source: "estimated" | "registry";
+  asOf: string;
   held: number;
   retired: number;
   ccPriceINR: number;
@@ -254,7 +256,8 @@ export function carbonCredits(input: MarketsInput): CarbonCredits {
     .filter((p) => p.credits > 0);
 
   return {
-    estimated: true, // potential from avoided emissions — not a registry holding
+    source: "estimated", // potential from avoided emissions — not a registry holding
+    asOf: "estimated",
     held: potential,
     retired: 0,
     ccPriceINR: CCC_INDICATIVE_INR, // indicative spot — no registry feed yet

@@ -76,6 +76,8 @@ export const IEX = {
   dayAvgINR: 4.12,
   peakINR: 8.9,
   offPeakINR: 2.7,
+  asOf: "indicative reference",
+  source: "indicative" as "indicative" | "iex",
   blocks: [
     { h: "00", p: 2.9 },
     { h: "02", p: 2.7 },
@@ -95,6 +97,8 @@ export const IEX = {
 /* --------------------------------------------------------------- Carbon credits */
 
 export const CARBON_CREDITS = {
+  source: "estimated" as "estimated" | "registry",
+  asOf: "estimated",
   held: 1200,
   retired: 300,
   ccPriceINR: 1450, // ₹ per Carbon Credit Certificate (CCTS)

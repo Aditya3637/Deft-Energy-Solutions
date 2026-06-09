@@ -82,7 +82,7 @@ console.log("Energy-markets & DER invariants (multi-DISCOM personas):");
   check(b.paybackYrs > 0 && Number.isFinite(b.paybackYrs), "P1 payback positive & finite");
 
   const cc = carbonCredits(input);
-  check(cc.estimated === true && cc.retired === 0, "P1 credits are estimated potential, retired = 0");
+  check(cc.source === "estimated" && cc.retired === 0, "P1 credits are estimated potential, retired = 0");
   check(cc.held > 0, "P1 savings → positive credit potential");
 }
 

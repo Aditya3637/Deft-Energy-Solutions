@@ -26,6 +26,8 @@ export default async function MarketsPage() {
   ]);
   const oa = oaEconomics(OA);
   const creditValue = CARBON_CREDITS.held * CARBON_CREDITS.ccPriceINR;
+  const iexLive = IEX.source === "iex";
+  const creditsLive = CARBON_CREDITS.source === "registry";
 
   return (
     <div className="space-y-6">
@@ -106,7 +108,10 @@ export default async function MarketsPage() {
             <CardHeader>
               <CardTitle>Day-ahead price (DAM)</CardTitle>
               <CardDescription>
-                ₹/kWh by 2-hour block. Red blocks are above ₹6. Indicative reference — the live IEX feed ships at Stage G.
+                ₹/kWh by 2-hour block. Red blocks are above ₹6.{" "}
+                {iexLive
+                  ? `Live exchange feed · as of ${IEX.asOf}.`
+                  : "Indicative reference — connect a market-data feed (IEX_PROVIDER=http) to go live."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,9 +127,9 @@ export default async function MarketsPage() {
         {/* Carbon credits */}
         <TabsContent value="carbon" className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Credit potential" value={formatIndianNumber(CARBON_CREDITS.held)} hint="est. from avoided emissions" icon={Award} />
-            <StatCard label="Indicative value" value={formatRupeesCompact(creditValue)} hint={`@ ₹${CARBON_CREDITS.ccPriceINR}/CCC ref.`} icon={IndianRupee} tone="success" />
-            <StatCard label="Retired" value={formatIndianNumber(CARBON_CREDITS.retired)} hint="registry — Stage G" icon={Check} />
+            <StatCard label={creditsLive ? "Credits held" : "Credit potential"} value={formatIndianNumber(CARBON_CREDITS.held)} hint={creditsLive ? "CCTS certificates" : "est. from avoided emissions"} icon={Award} />
+            <StatCard label={creditsLive ? "Portfolio value" : "Indicative value"} value={formatRupeesCompact(creditValue)} hint={`@ ₹${CARBON_CREDITS.ccPriceINR}/CCC${creditsLive ? "" : " ref."}`} icon={IndianRupee} tone="success" />
+            <StatCard label="Retired" value={formatIndianNumber(CARBON_CREDITS.retired)} hint={creditsLive ? "for compliance" : "registry — connect to enable"} icon={Check} />
           </div>
           <Card>
             <CardHeader>

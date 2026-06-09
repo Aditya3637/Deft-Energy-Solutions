@@ -44,8 +44,15 @@
    delete), consent recorded at signup, grievance contact (`/v1/account/*` + Settings → Privacy & data).
    *Still:* retention auto-purge cron, perf @ 50k bills/mo + 5k MAU, full test matrix
    (unit/integration/E2E/contract/perf/security/a11y), VAPT, error monitoring + structured logging.
-6. **Remaining integrations (Stage G):** IEX/PXIL prices, smart-meter/AMI, BMS/IoT, WhatsApp/SMS,
-   DISCOM tariff scraping.
+6. **Remaining integrations (Stage G):**
+   - ✅ **IEX/PXIL price feed — adapter scaffolded** (`server/src/markets/iex/`): provider seam
+     (`IEX_PROVIDER=http` + `IEX_BASE_URL`/`IEX_API_KEY`) with pure response mapper; `GET /v1/markets/iex`
+     returns the live feed when configured, else the indicative reference (UI labels which). *Live needs a
+     market-data account.*
+   - ✅ **Carbon-credit (CCTS) registry — adapter scaffolded** (`server/src/markets/registry/`): provider
+     seam (`REGISTRY_PROVIDER=http` + `REGISTRY_BASE_URL`/`REGISTRY_API_KEY`); real held/retired overlay the
+     estimated potential on `GET /v1/markets`. *Live needs a registry account.* CI: `integrations-check.ts`.
+   - Still pending: smart-meter/AMI, BMS/IoT, WhatsApp/SMS, DISCOM tariff scraping.
 7. **Module breadth → live:** wire mock breadth modules to the real backend domain-by-domain.
    - ✅ **Compliance** — `GET /v1/compliance` derives the scorecard / BRSR Principle-6 / ESG-Environment
      from the org's real bills, buildings and GHG inventory (no-false-positive discipline; CI invariant
@@ -56,7 +63,7 @@
      (BESS sizing + microgrid + VPP from peak demand, ToD spread and the Equipment registry). No
      fabrication when data is absent; external inputs (IEX price, CCC spot) labelled *indicative* in the
      UI pending the Stage-G feeds. CI invariant `markets-check.ts` over multi-DISCOM personas.
-     *Deferred:* live IEX day-ahead feed + carbon-credit registry (Stage-G integrations).
+     IEX + carbon-credit-registry **adapters now scaffolded** (see #6) — flip to live with an account.
    - ✅ **B7 — Leaderboard / Marketplace / Training** — `GET /v1/leaderboard` (badges earned from real
      PF / trend / avoided-emissions / on-time-payment data; reward points from a transparent activity
      ledger), `GET /v1/marketplace` (curated vendor directory + **RFQs from the org's real

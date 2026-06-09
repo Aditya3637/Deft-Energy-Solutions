@@ -48,11 +48,23 @@ const fetchAssets = cache(async (): Promise<{ bess: Bess; microgrid: Microgrid; 
   }
 });
 
+type Iex = typeof M.IEX;
+const fetchIex = cache(async (): Promise<Iex | null> => {
+  if (!liveServer()) return null;
+  try {
+    // Live exchange feed when configured (IEX_PROVIDER=http); else the backend
+    // returns the indicative reference with source="indicative".
+    return await apiFetch<Iex>("/v1/markets/iex", NO_STORE);
+  } catch {
+    return null;
+  }
+});
+
 export const markets = {
   ghgScopes: async (): Promise<GhgScopes> => (await fetchCarbon()) ?? M.GHG_SCOPES,
   openAccess: async (): Promise<OA> => (await fetchMarkets())?.openAccess ?? M.OA,
   carbonCredits: async (): Promise<CarbonCredits> => (await fetchMarkets())?.carbonCredits ?? M.CARBON_CREDITS,
-  iex: async () => M.IEX, // indicative reference — no live IEX feed yet (Stage G)
+  iex: async (): Promise<Iex> => (await fetchIex()) ?? M.IEX,
   bess: async (): Promise<Bess> => (await fetchAssets())?.bess ?? M.BESS,
   microgrid: async (): Promise<Microgrid> => (await fetchAssets())?.microgrid ?? M.MICROGRID,
   vpp: async (): Promise<Vpp> => (await fetchAssets())?.vpp ?? M.VPP,

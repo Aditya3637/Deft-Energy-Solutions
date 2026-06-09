@@ -18,6 +18,7 @@
     "compliance:check": "ts-node --transpile-only scripts/compliance-check.ts",
     "markets:check": "ts-node --transpile-only scripts/markets-check.ts",
     "ecosystem:check": "ts-node --transpile-only scripts/ecosystem-check.ts",
+    "integrations:check": "ts-node --transpile-only scripts/integrations-check.ts",
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {

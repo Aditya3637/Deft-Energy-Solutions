@@ -7,6 +7,24 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Stage G — IEX price feed + carbon-credit registry adapters scaffolded)
+- **Two external feeds now have provider seams** (same pattern as the OCR / BBPS adapters): a built-in
+  fallback works today; a real provider activates the moment its account/key is set.
+  - **IEX day-ahead price** (`server/src/markets/iex/`): `IEX_PROVIDER=http` + `IEX_BASE_URL`/`IEX_API_KEY`.
+    `GET /v1/markets/iex` returns the live feed when configured, else the **indicative reference**
+    (`source` flag). Pure `mapIexResponse` (handles common envelope/field names); service degrades to the
+    reference if a live fetch fails so the dashboard always renders.
+  - **Carbon-credit (CCTS) registry** (`server/src/markets/registry/`): `REGISTRY_PROVIDER=http` +
+    `REGISTRY_BASE_URL`/`REGISTRY_API_KEY`. Real **held/retired** holdings overlay the estimated potential
+    on `GET /v1/markets` (`source` = "registry" vs "estimated"). Pure `mapRegistryResponse` (clamps
+    negatives, defaults the spot price).
+- **Frontend:** `markets.iex()` live-fetches `/v1/markets/iex`; the Markets page labels IEX **"Live · as of
+  …"** vs **"Indicative reference"** and carbon credits **"Credits held"** vs **"Credit potential"** off the
+  `source` flag. Marketplace empty-bid guard retained.
+- **CI invariant** `scripts/integrations-check.ts`: env-based provider selection + the pure mappers
+  (alt envelopes/field names, empty/missing/negative inputs) — verified with no network.
+- **Env** documented in `server/.env.example`. No schema/RLS/erase changes (external read feeds).
+
 ### 2026-06-09 (Breadth #7 — B7 Ecosystem wired to live data)
 - **Leaderboard, Marketplace and Training now run on real data / real catalogs.** New
   `server/src/ecosystem/` (`ecosystem.compute.ts` pure/DB-free; `ecosystem.catalog.ts` curated content):

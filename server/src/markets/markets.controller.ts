@@ -13,10 +13,16 @@ export class MarketsController {
     return this.svc.carbon(orgId);
   }
 
-  /** GET /v1/markets — open-access economics + carbon-credit potential. */
+  /** GET /v1/markets — open-access economics + carbon credits. */
   @Get("markets")
   markets(@CurrentOrg() orgId: string) {
     return this.svc.markets(orgId);
+  }
+
+  /** GET /v1/markets/iex — day-ahead price (live feed if configured, else indicative). */
+  @Get("markets/iex")
+  iex() {
+    return this.svc.iex();
   }
 
   /** GET /v1/assets — BESS / microgrid / VPP, sized from the org's load. */
