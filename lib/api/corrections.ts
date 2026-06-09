@@ -22,16 +22,26 @@ export type CorrectionsPayload = {
   model?: string;
   source: string;
   discom?: string;
+  /** DISCOM whose template was applied at extraction ("" / unset = none). */
+  templateApplied?: string;
   fieldsTotal: number;
   fieldsFound: number;
   corrections: CorrectionItem[];
 };
 
+/** A with/without-template accuracy slice. */
+export type AccuracyBucket = {
+  samples: number;
+  corrections: number;
+  accuracyPct: number | null;
+};
 export type DiscomAccuracy = {
   discom: string;
   samples: number;
   accuracyPct: number | null;
   corrections: number;
+  templated: AccuracyBucket;
+  untemplated: AccuracyBucket;
 };
 export type FieldAccuracy = {
   fieldKey: string;
@@ -44,6 +54,8 @@ export type AccuracySummary = {
   overallAccuracyPct: number | null;
   fieldsSeen: number;
   corrections: number;
+  templated: AccuracyBucket;
+  untemplated: AccuracyBucket;
   byDiscom: DiscomAccuracy[];
   byField: FieldAccuracy[];
 };
@@ -66,12 +78,34 @@ export const ACCURACY_FIXTURE: AccuracySummary = {
   overallAccuracyPct: 86.8,
   fieldsSeen: 589,
   corrections: 78,
+  templated: { samples: 24, corrections: 20, accuracyPct: 92.7 },
+  untemplated: { samples: 36, corrections: 58, accuracyPct: 81.5 },
   byDiscom: [
-    { discom: "MSEDCL (Mahavitaran)", samples: 26, accuracyPct: 88.1, corrections: 34 },
-    { discom: "BESCOM", samples: 12, accuracyPct: 92.6, corrections: 12 },
-    { discom: "TANGEDCO", samples: 9, accuracyPct: 84.0, corrections: 16 },
-    { discom: "Tata Power-DDL", samples: 7, accuracyPct: 93.4, corrections: 8 },
-    { discom: "Adani Electricity Mumbai", samples: 6, accuracyPct: 91.2, corrections: 8 },
+    {
+      discom: "MSEDCL (Mahavitaran)", samples: 26, accuracyPct: 88.1, corrections: 34,
+      templated: { samples: 12, corrections: 12, accuracyPct: 91.0 },
+      untemplated: { samples: 14, corrections: 22, accuracyPct: 84.5 },
+    },
+    {
+      discom: "BESCOM", samples: 12, accuracyPct: 92.6, corrections: 12,
+      templated: { samples: 5, corrections: 4, accuracyPct: 94.2 },
+      untemplated: { samples: 7, corrections: 8, accuracyPct: 90.5 },
+    },
+    {
+      discom: "TANGEDCO", samples: 9, accuracyPct: 84.0, corrections: 16,
+      templated: { samples: 3, corrections: 3, accuracyPct: 89.0 },
+      untemplated: { samples: 6, corrections: 13, accuracyPct: 80.5 },
+    },
+    {
+      discom: "Tata Power-DDL", samples: 7, accuracyPct: 93.4, corrections: 8,
+      templated: { samples: 2, corrections: 1, accuracyPct: 96.0 },
+      untemplated: { samples: 5, corrections: 7, accuracyPct: 91.0 },
+    },
+    {
+      discom: "Adani Electricity Mumbai", samples: 6, accuracyPct: 91.2, corrections: 8,
+      templated: { samples: 2, corrections: 1, accuracyPct: 95.5 },
+      untemplated: { samples: 4, corrections: 7, accuracyPct: 88.0 },
+    },
   ],
   byField: [
     { fieldKey: "mdDateTime", seen: 48, corrected: 17, accuracyPct: 64.6 },

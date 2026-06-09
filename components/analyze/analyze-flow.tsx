@@ -69,6 +69,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
     provider: string;
     model: string;
     source: string;
+    templateApplied: string;
   } | null>(null);
 
   // Stage G: upload the chosen file to the real extraction endpoint. A null
@@ -84,6 +85,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         provider: out.live ? out.provider ?? "unknown" : "sample",
         model: out.model ?? "",
         source: out.live ? out.source ?? "vision" : "sample",
+        templateApplied: out.templateApplied ?? "",
       };
       const tmpl = out.live && out.templateApplied ? ` ${out.templateApplied} template applied.` : "";
       setNotice(
@@ -108,6 +110,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         provider: ctx?.provider ?? "bbps",
         model: "",
         source: ctx?.source ?? "bbps-demo",
+        templateApplied: "",
       };
       setNotice(note);
       setStep("review");
@@ -152,6 +155,7 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         model: o.model,
         source: o.source,
         discom: fields.find((f) => f.key === "discom")?.value?.trim() || undefined,
+        templateApplied: o.templateApplied || undefined,
         fieldsTotal: o.originalFields.length,
         fieldsFound: o.originalFields.filter((f) => f.value.trim() !== "").length,
         corrections: items,

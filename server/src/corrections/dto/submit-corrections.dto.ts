@@ -26,6 +26,8 @@ export class SubmitCorrectionsDto {
   @IsOptional() @IsString() model?: string;
   @IsString() source!: string; // vision | pdf-text | bbps | bbps-demo
   @IsOptional() @IsString() discom?: string;
+  /** DISCOM whose template was applied at extraction ("" / unset = none). */
+  @IsOptional() @IsString() templateApplied?: string;
   @IsInt() fieldsTotal!: number;
   @IsInt() fieldsFound!: number;
 

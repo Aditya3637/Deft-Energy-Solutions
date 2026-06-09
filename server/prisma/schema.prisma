@@ -423,6 +423,9 @@ model ExtractionFeedback {
   model          String   @default("")
   source         String // vision | pdf-text | bbps | bbps-demo | sample
   discom         String   @default("")
+  // DISCOM whose template was applied at extraction ("" = none). Drives the
+  // with-template vs without accuracy comparison.
+  templateApplied String  @default("")
   fieldsTotal    Int      @default(0)
   fieldsFound    Int      @default(0)
   correctedCount Int      @default(0)

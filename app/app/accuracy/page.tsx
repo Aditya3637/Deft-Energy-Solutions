@@ -1,4 +1,5 @@
-import { Gauge, ScanLine, ListChecks, PencilLine } from "lucide-react";
+import type { ReactNode } from "react";
+import { Gauge, ScanLine, ListChecks, PencilLine, Wand2 } from "lucide-react";
 
 import {
   Card,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/app/page-header";
 import { StatCard } from "@/components/app/stat-card";
-import { corrections, fieldLabel } from "@/lib/api/corrections";
+import { corrections, fieldLabel, type AccuracyBucket } from "@/lib/api/corrections";
 
 export const metadata = { title: "Extraction accuracy" };
 
@@ -25,15 +26,17 @@ function pctLabel(pct: number | null): string {
   return pct == null ? "—" : `${pct.toFixed(1)}%`;
 }
 
-/** Labelled horizontal accuracy bar. */
+/** Labelled horizontal accuracy bar, with an optional footer line. */
 function AccuracyRow({
   label,
   meta,
   pct,
+  footer,
 }: {
   label: string;
   meta: string;
   pct: number | null;
+  footer?: ReactNode;
 }) {
   const b = band(pct);
   return (
@@ -50,7 +53,30 @@ function AccuracyRow({
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
       </div>
+      {footer ? <div className="mt-1.5">{footer}</div> : null}
     </div>
+  );
+}
+
+/** "+N.N pts" lift in accuracy from applying a template (templated − untemplated). */
+function lift(t: AccuracyBucket, u: AccuracyBucket): number | null {
+  if (t.accuracyPct == null || u.accuracyPct == null) return null;
+  return Math.round((t.accuracyPct - u.accuracyPct) * 10) / 10;
+}
+
+/** Per-DISCOM with/without-template comparison footer (only when both exist). */
+function TemplateFooter({ t, u }: { t: AccuracyBucket; u: AccuracyBucket }) {
+  if (t.samples === 0 || u.samples === 0) return null;
+  const l = lift(t, u);
+  return (
+    <p className="text-xs text-muted-foreground">
+      template {pctLabel(t.accuracyPct)} ({t.samples}) · without {pctLabel(u.accuracyPct)} ({u.samples})
+      {l != null && (
+        <span className={l >= 0 ? "ml-1 font-medium text-success" : "ml-1 font-medium text-destructive"}>
+          {l >= 0 ? `+${l}` : l} pts
+        </span>
+      )}
+    </p>
   );
 }
 
@@ -95,11 +121,46 @@ export default async function AccuracyPage() {
             <StatCard label="Corrections" value={a.corrections.toLocaleString("en-IN")} hint="user edits captured" icon={PencilLine} />
           </div>
 
+          {a.templated.samples > 0 && a.untemplated.samples > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wand2 className="h-4 w-4 text-primary" />
+                  Do per-DISCOM templates help?
+                </CardTitle>
+                <CardDescription>
+                  Accuracy with a DISCOM template applied vs. without.{" "}
+                  {(() => {
+                    const l = lift(a.templated, a.untemplated);
+                    return l == null ? null : (
+                      <span className={l >= 0 ? "font-medium text-success" : "font-medium text-destructive"}>
+                        {l >= 0 ? `+${l}` : l} pts overall
+                      </span>
+                    );
+                  })()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="divide-y">
+                <AccuracyRow
+                  label="With template"
+                  meta={`${a.templated.samples} bill${a.templated.samples === 1 ? "" : "s"}`}
+                  pct={a.templated.accuracyPct}
+                />
+                <AccuracyRow
+                  label="Without template"
+                  meta={`${a.untemplated.samples} bill${a.untemplated.samples === 1 ? "" : "s"}`}
+                  pct={a.untemplated.accuracyPct}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Accuracy by DISCOM</CardTitle>
               <CardDescription>
-                Where extraction is strong vs. where it needs per-DISCOM templates. Sorted by volume.
+                Where extraction is strong vs. where it needs per-DISCOM templates. Sorted by volume;
+                template vs. without shown where both exist.
               </CardDescription>
             </CardHeader>
             <CardContent className="divide-y">
@@ -109,6 +170,7 @@ export default async function AccuracyPage() {
                   label={d.discom}
                   meta={`${d.samples} bill${d.samples === 1 ? "" : "s"}`}
                   pct={d.accuracyPct}
+                  footer={<TemplateFooter t={d.templated} u={d.untemplated} />}
                 />
               ))}
             </CardContent>

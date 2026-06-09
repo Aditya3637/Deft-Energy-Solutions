@@ -7,6 +7,15 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G⁷ — template effectiveness: with/without accuracy)
+- **`templateApplied` now recorded on every feedback row** (schema + DTO + capture) so the accuracy view
+  can prove whether per-DISCOM templates actually help. `GET /v1/corrections/accuracy` now returns
+  with-template vs without `templated`/`untemplated` buckets — overall and per DISCOM (accuracy + sample
+  counts). Schema column added with a `""` default (safe `prisma db push`).
+- **Dashboard:** new "Do per-DISCOM templates help?" card (with vs without bars + overall lift in pts),
+  and each DISCOM row now shows a `template X% (n) · without Y% (m) · +Δ pts` footer where both exist.
+  Fixture updated so the static demo shows the comparison. Closes the prove-it loop on Stage G⁶.
+
 ### 2026-06-09 (Stage G⁶ — per-DISCOM template hooks)
 - **Targeted, per-utility extraction cues** (`server/src/extract/discom-templates.ts`). When the DISCOM is
   known, that utility's hints for the hardest fields (MD date/time, billing demand, meter no., PF penalty,
