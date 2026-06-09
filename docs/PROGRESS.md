@@ -7,6 +7,17 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key
 
+### 2026-06-09 (Stage G⁶ — per-DISCOM template hooks)
+- **Targeted, per-utility extraction cues** (`server/src/extract/discom-templates.ts`). When the DISCOM is
+  known, that utility's hints for the hardest fields (MD date/time, billing demand, meter no., PF penalty,
+  FAC, ToD zones) are injected into the **user** message (cached system prefix stays byte-stable).
+- **DISCOM resolution:** explicit hint — optional "Electricity board" picker on the upload screen, or the
+  BBPS biller — else **auto-detected** from the PDF text layer (scans for MSEDCL/BESCOM/… signatures).
+  Threaded through both providers (`extractViaAnthropic[Text]` / `extractViaOpenAI[Text]`) and the
+  service; `POST /v1/extract` takes an optional `discom` field; result reports `templateApplied`.
+- Seed templates: MSEDCL, BESCOM, TANGEDCO, TPDDL, BSES, Adani, Torrent. The accuracy dashboard's
+  "hardest fields per DISCOM" is the worklist for adding/refining more. Closes de-risking step 4.
+
 ### 2026-06-09 (Stage G⁵ — accuracy dashboard UI)
 - **`/app/accuracy` — measured extraction accuracy, per DISCOM and per field.** Server page reads
   `corrections.accuracy()` (live on Vercel SSR via `GET /v1/corrections/accuracy`; the static Pages build

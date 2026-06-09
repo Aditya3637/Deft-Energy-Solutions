@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   HttpException,
   HttpStatus,
@@ -24,7 +25,10 @@ export class ExtractController {
    */
   @Post()
   @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_BYTES } }))
-  async extract(@UploadedFile() file?: Express.Multer.File) {
+  async extract(
+    @UploadedFile() file?: Express.Multer.File,
+    @Body("discom") discom?: string,
+  ) {
     if (!this.svc.isConfigured()) {
       throw new HttpException(
         "Bill extraction is not configured on this server (ANTHROPIC_API_KEY unset).",
@@ -36,7 +40,7 @@ export class ExtractController {
     }
 
     try {
-      return await this.svc.extract({ buffer: file.buffer, mimetype: file.mimetype });
+      return await this.svc.extract({ buffer: file.buffer, mimetype: file.mimetype }, discom);
     } catch (err) {
       if (err instanceof UnsupportedMediaError) {
         throw new HttpException(err.message, HttpStatus.UNSUPPORTED_MEDIA_TYPE);

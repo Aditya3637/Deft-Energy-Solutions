@@ -110,18 +110,23 @@ async function runAnthropic(content: unknown[]): Promise<ProviderResult> {
   };
 }
 
+/** USER_TEXT plus an optional per-DISCOM hint (kept out of the cached system prefix). */
+function userText(hint?: string): string {
+  return hint ? `${USER_TEXT}\n\n${hint}` : USER_TEXT;
+}
+
 /** Vision path: send the PDF/image to Claude directly. */
-export function extractViaAnthropic(file: {
-  buffer: Buffer;
-  mimetype: string;
-}): Promise<ProviderResult> {
+export function extractViaAnthropic(
+  file: { buffer: Buffer; mimetype: string },
+  hint?: string,
+): Promise<ProviderResult> {
   const block = sourceBlock(file.mimetype, file.buffer.toString("base64"));
-  return runAnthropic([block, { type: "text", text: USER_TEXT }]);
+  return runAnthropic([block, { type: "text", text: userText(hint) }]);
 }
 
 /** Text path: structure already-extracted bill text (digital-PDF text layer). */
-export function extractViaAnthropicText(text: string): Promise<ProviderResult> {
+export function extractViaAnthropicText(text: string, hint?: string): Promise<ProviderResult> {
   return runAnthropic([
-    { type: "text", text: `${USER_TEXT}\n\nExtracted bill text:\n"""\n${text}\n"""` },
+    { type: "text", text: `${userText(hint)}\n\nExtracted bill text:\n"""\n${text}\n"""` },
   ]);
 }

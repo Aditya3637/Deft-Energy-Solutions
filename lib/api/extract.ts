@@ -15,6 +15,8 @@ export type ExtractOutcome = {
   total?: number;
   /** "pdf-text" → read the PDF's text layer (free); "vision" → OCR. */
   source?: "pdf-text" | "vision";
+  /** DISCOM whose template was applied (hint or auto-detected), if any. */
+  templateApplied?: string | null;
   /** Set when we fell back to the sample (no backend / extraction failed). */
   note?: string;
 };
@@ -27,6 +29,7 @@ type ServerExtract = {
   total: number;
   lowConfidence: string[];
   source: "pdf-text" | "vision";
+  templateApplied: string | null;
 };
 
 function sample(note?: string): ExtractOutcome {
@@ -39,7 +42,7 @@ export const extract = {
    * when a backend is configured; otherwise (or on any failure) falls back to
    * the sample bill so the walkthrough still works offline / on the static demo.
    */
-  async fromFile(file: File | null): Promise<ExtractOutcome> {
+  async fromFile(file: File | null, discomHint?: string): Promise<ExtractOutcome> {
     if (!file) return sample();
     if (!isApiConfigured()) {
       return sample("No live backend configured — showing a sample bill.");
@@ -47,6 +50,7 @@ export const extract = {
 
     const form = new FormData();
     form.append("file", file, file.name);
+    if (discomHint) form.append("discom", discomHint);
 
     try {
       const res = await fetch(`${getApiBase()}/v1/extract`, {
@@ -76,6 +80,7 @@ export const extract = {
         found: data.found,
         total: data.total,
         source: data.source,
+        templateApplied: data.templateApplied,
       };
     } catch {
       return sample("Couldn't reach the extraction service — showing a sample bill.");

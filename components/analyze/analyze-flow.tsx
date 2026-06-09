@@ -75,9 +75,9 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
   // file ("try the sample") and any backend failure both fall back to the
   // sample bill, so the walkthrough always completes.
   const runExtract = React.useCallback(
-    async (file: File | null) => {
+    async (file: File | null, discomHint?: string) => {
       setStep("extracting");
-      const out = await extract.fromFile(file);
+      const out = await extract.fromFile(file, discomHint);
       setFields(out.fields.map((f) => ({ ...f })));
       origin.current = {
         originalFields: out.fields.map((f) => ({ ...f })),
@@ -85,12 +85,13 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
         model: out.model ?? "",
         source: out.live ? out.source ?? "vision" : "sample",
       };
+      const tmpl = out.live && out.templateApplied ? ` ${out.templateApplied} template applied.` : "";
       setNotice(
         !out.live
           ? out.note ?? null
           : out.source === "pdf-text"
-            ? "Read directly from the PDF's text layer — no OCR needed."
-            : null,
+            ? `Read directly from the PDF's text layer — no OCR needed.${tmpl}`
+            : tmpl.trim() || null,
       );
       setStep("review");
     },
@@ -193,9 +194,24 @@ export function AnalyzeFlow({ sampleFields }: { sampleFields: ExtractedField[] }
 
 /* ---------------------------------------------------------------- Upload */
 
-function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
+function UploadStep({
+  onPick,
+}: {
+  onPick: (file: File | null, discomHint?: string) => void;
+}) {
   const [dragging, setDragging] = React.useState(false);
+  const [hint, setHint] = React.useState("");
+  const [billers, setBillers] = React.useState<Biller[] | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const pick = (file: File | null) => onPick(file, hint || undefined);
+
+  React.useEffect(() => {
+    let alive = true;
+    billfetch.billers().then((r) => alive && setBillers(r.billers));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -208,7 +224,7 @@ function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          onPick(e.dataTransfer.files?.[0] ?? null);
+          pick(e.dataTransfer.files?.[0] ?? null);
         }}
         className={cn(
           "flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-16 text-center transition-colors",
@@ -238,8 +254,27 @@ function UploadStep({ onPick }: { onPick: (file: File | null) => void }) {
           capture="environment"
           className="sr-only"
           aria-label="Upload a bill"
-          onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+          onChange={(e) => pick(e.target.files?.[0] ?? null)}
         />
+      </div>
+
+      <div className="flex flex-col items-center gap-1.5">
+        <Label htmlFor="hint-discom" className="text-xs text-muted-foreground">
+          Electricity board (optional — improves accuracy)
+        </Label>
+        <select
+          id="hint-discom"
+          value={hint}
+          onChange={(e) => setHint(e.target.value)}
+          className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">Auto-detect</option>
+          {billers?.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.discom}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">

@@ -122,11 +122,16 @@ async function runOpenAI(userContent: unknown): Promise<ProviderResult> {
   return { fields: coerceRawFields(parseFields(content)), model: openaiModel() };
 }
 
+/** USER_TEXT plus an optional per-DISCOM hint. */
+function userText(hint?: string): string {
+  return hint ? `${USER_TEXT}\n\n${hint}` : USER_TEXT;
+}
+
 /** Vision path: send the image to the model (PDFs not supported here). */
-export function extractViaOpenAI(file: {
-  buffer: Buffer;
-  mimetype: string;
-}): Promise<ProviderResult> {
+export function extractViaOpenAI(
+  file: { buffer: Buffer; mimetype: string },
+  hint?: string,
+): Promise<ProviderResult> {
   if (file.mimetype === "application/pdf") {
     throw new UnsupportedMediaError(
       "application/pdf (this provider only OCRs images — upload a photo/screenshot, or set EXTRACT_PROVIDER=anthropic for scanned PDFs)",
@@ -137,12 +142,12 @@ export function extractViaOpenAI(file: {
   }
   const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
   return runOpenAI([
-    { type: "text", text: USER_TEXT },
+    { type: "text", text: userText(hint) },
     { type: "image_url", image_url: { url: dataUri } },
   ]);
 }
 
 /** Text path: structure already-extracted bill text — works for digital PDFs. */
-export function extractViaOpenAIText(text: string): Promise<ProviderResult> {
-  return runOpenAI(`${USER_TEXT}\n\nExtracted bill text:\n"""\n${text}\n"""`);
+export function extractViaOpenAIText(text: string, hint?: string): Promise<ProviderResult> {
+  return runOpenAI(`${userText(hint)}\n\nExtracted bill text:\n"""\n${text}\n"""`);
 }

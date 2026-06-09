@@ -110,7 +110,12 @@ over time, and the confidence threshold for auto-accept (no human review) rises 
 3. **VLM schema extraction** for photo/scan uploads ✅ *done* (Stage G) — behind the existing
    review/correct UI; **corrections now captured** (`POST /v1/corrections` logs model value + confidence
    vs the user's final value, per field) as training data.
-4. **Per-DISCOM templates** for the top ~20, prioritised by real volume.
+4. **Per-DISCOM templates** ✅ *scaffolded* — `server/src/extract/discom-templates.ts` holds per-utility
+   cues (MSEDCL, BESCOM, TANGEDCO, TPDDL, BSES, Adani, Torrent) targeting the hardest fields (MD
+   date/time, billing demand, meter no., PF penalty, FAC, ToD zones). Applied when the DISCOM is known —
+   explicit hint (optional picker on upload, or the BBPS biller) or auto-detected from the PDF text layer
+   — by injecting the cues into the *user* message (keeps the cached system prefix stable). Add/refine
+   templates by reading the accuracy dashboard's "hardest fields per DISCOM".
 5. **Live accuracy dashboard** ✅ *done* — `/app/accuracy` reads `GET /v1/corrections/accuracy` and shows
    overall / per-DISCOM / per-field accuracy (colour-banded bars, hardest fields first). Live on Vercel
    SSR; the static demo bakes a fixture. Accuracy is now a measured, visible number per DISCOM, not a
