@@ -7,6 +7,18 @@
 - **Approach:** SCREENS FIRST (UI + mock-API seam fully built and polished, then backend → endpoints → integrations)
 - **Active stage:** Frontend ✅ · backend **LIVE on Render** ✅ · Stage F (analyze save) live ✅ · Vercel-ready ✅ · **Stage G real OCR (code-complete)** ⏳ key · **Payments/due-date tracking** ✅ · **Collection-agent backend (sandbox)** ✅
 
+### 2026-06-09 (Stage H — SSR cookie session: signed-in users see their own org)
+- **The session token is now mirrored to a cookie**, so Vercel **server-rendered** pages are scoped to the
+  signed-in org (not just client-side actions). `setSessionToken`/`clearSessionToken` write/expire a
+  `deft_session` cookie (SameSite=Lax, Secure on https); `apiFetch` reads it on the server via a
+  **variable-specifier dynamic `next/headers` import** (`webpackIgnore`) gated by `process.env.VERCEL`.
+- **Why it's safe for both builds:** the static Pages export never sets `VERCEL`, so `cookies()` is never
+  invoked and the dynamic import is never bundled into the client → static export stays static; on Vercel
+  the cookie is read and forwarded as `Authorization: Bearer` to the backend (which already verifies it).
+  Anonymous/static still falls back to the demo org.
+- **Deferred (PLAN §H):** live email; httpOnly cookie via a route handler; threading the token through the
+  remaining manual-header client fetches; roles/membership.
+
 ### 2026-06-09 (Stage H — real auth / multi-tenant foundation)
 - **Verified session tokens replace the spoofable `x-org-id` header** (the real security hole: any client
   could read any org by setting that header). Hand-rolled HS256 JWT (`server/src/auth/jwt.ts`, no dep,

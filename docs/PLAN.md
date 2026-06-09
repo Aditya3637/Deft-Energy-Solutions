@@ -164,10 +164,12 @@ Build the 203 screens in this priority, each meeting the Stage-3 DoD:
 - [~] **Auth & multi-tenant (IN PROGRESS):** real per-org identity via verified HS256 session tokens +
       magic-link (`/v1/auth/request|verify|me`); a non-RLS `Account` table bootstraps email→org. The
       spoofable `x-org-id` header is **no longer trusted** — anonymous (no/invalid token) safely falls back
-      to the demo org, preserving "value before signup." Crypto invariants run in CI. **Deferred:** live
-      email delivery (link is returned/logged for now), **SSR cookie session** (server-rendered pages stay
-      demo-scoped until the token is read from a cookie), threading the token through the remaining
-      manual-header client fetches (extract/billfetch/payments/collections), and roles/membership.
+      to the demo org, preserving "value before signup." Crypto invariants run in CI. **SSR cookie session
+      ✅** — the token is mirrored to a cookie and read on Vercel SSR (via a variable-specifier dynamic
+      `next/headers`, gated by `process.env.VERCEL` so the static Pages export never calls `cookies()`), so
+      a signed-in user's *server-rendered* pages are scoped to their org. **Deferred:** live email delivery
+      (link returned/logged for now), httpOnly cookie via a route handler, threading the token through the
+      remaining manual-header client fetches (extract/billfetch/payments/collections), and roles/membership.
 - [ ] Security + DPDP (RLS, consent, retention, Vault, VAPT); perf to 50k bills/mo + 5k MAU
 - [ ] Full testing matrix (unit/integration/E2E/contract/perf/security/a11y/visual/chaos)
 
